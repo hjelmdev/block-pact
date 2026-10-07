@@ -52,9 +52,22 @@ jobs:
       - name: Import and export
         run: |
           mkdir -p build/web
+          touch build/.gdignore
           ~/godot/godot --headless --path . --import || true
           ~/godot/godot --headless --path . --export-release "Web" build/web/index.html
           test -f build/web/index.wasm
+
+      # GitHub Pages caches files for ~10 min. Give the big files a
+      # per-commit name so a new deploy never mixes old and new files.
+      - name: Version file names (cache busting)
+        run: |
+          V="${GITHUB_SHA::8}"
+          cd build/web
+          for f in index.js index.wasm index.pck index.audio.worklet.js index.audio.position.worklet.js; do
+            [ -f "$f" ] && mv "$f" "index-$V${f#index}"
+          done
+          sed -i "s/\"executable\":\"index\"/\"executable\":\"index-$V\"/; s/\"index\.pck\"/\"index-$V.pck\"/; s/\"index\.wasm\"/\"index-$V.wasm\"/; s/src=\"index\.js\"/src=\"index-$V.js\"/" index.html
+          grep -q "index-$V" index.html
 
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
