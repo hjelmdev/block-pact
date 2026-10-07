@@ -28,6 +28,10 @@ På mobil visas pekkontroller automatiskt och har multitouch, så att du kan hå
 2. *Project → Export → Web* (förinställningen finns redan): exportera till `build/web/`.
 3. Testa lokalt med Godots "Run in browser" eller valfri statisk server. Thread support är avstängt, så det behövs inga COOP/COEP-headers och spelet kan hostas var som helst (t.ex. Netlify, Vercel, GitHub Pages eller itch.io).
 
+### GitHub Pages
+
+`.github/workflows/deploy-web.yml` bygger webbexporten och publicerar den vid varje push till `main`. Spelet hamnar på https://hjelmdev.github.io/block-pact/. Workflowen kan också köras manuellt under *Actions*. Engångsinställning: *Settings → Pages → Source: GitHub Actions*.
+
 ## Byta grafik, ljud och tema (utan kod)
 
 Allt utseende går via **`res://config/game_assets.tres`**:
