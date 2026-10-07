@@ -1,0 +1,9 @@
+# Godot 4+ specific ignores
+.godot/
+/android/
+
+# Exports
+/build/
+
+# Local secrets / machine-specific config
+config/backend_config.local.tres

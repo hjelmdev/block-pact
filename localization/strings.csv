@@ -1,0 +1,75 @@
+keys,en,sv
+ACCOUNT_TITLE,Account,Konto
+ACCOUNT_GUEST,You are playing as a guest.,Du spelar som gäst.
+ACCOUNT_GUEST_INFO,"Guests can play everything, but highscores, achievements and progress are only saved with an account.","Gäster kan spela allt, men highscores, achievements och progress sparas bara med ett konto."
+ACCOUNT_LOGIN_WITH,Sign in with %s,Logga in med %s
+ACCOUNT_LOGOUT,Sign out,Logga ut
+ACCOUNT_NICKNAME,Nickname,Smeknamn
+ACCOUNT_NOT_CONFIGURED,Online accounts are not set up yet – playing as guest.,Onlinekonton är inte uppsatta än – du spelar som gäst.
+ACCOUNT_SIGNED_IN,Signed in as %s (%s),Inloggad som %s (%s)
+COMMON_BACK,Back,Tillbaka
+COMMON_LOADING,Loading…,Laddar…
+GUEST_NAME,Guest,Gäst
+HUD_COMBO,Combo x%d,Combo x%d
+HUD_GO,GO!,KÖR!
+HUD_LEVEL,LV %d,NV %d
+HUD_LINES,Lines %d,Rader %d
+HUD_TEAM_TOTAL,Team %d,Lag %d
+LEADERBOARD_TITLE,Leaderboard,Topplista
+LEADERBOARD_EMPTY,No scores yet – be the first!,Inga poäng än – bli först!
+LEADERBOARD_MODE,Mode,Läge
+LEADERBOARD_OFFLINE,The leaderboard needs an online backend (not configured yet).,Topplistan kräver en online-backend (inte konfigurerad än).
+LOBBY_TITLE,New match,Ny match
+LOBBY_ADD_BOT,+ Bot,+ Bot
+LOBBY_ADD_HUMAN,+ Player,+ Spelare
+LOBBY_BOARD_INFO,Board: %d × %d,Spelplan: %d × %d
+LOBBY_BOT,Bot,Bot
+LOBBY_DEVICE_CONFLICT,Two players use the same controls.,Två spelare använder samma kontroller.
+LOBBY_HUMAN,Human,Människa
+LOBBY_NAME,Name,Namn
+LOBBY_START,Start,Starta
+MENU_TAGLINE,We need each other to survive – but I'm still going to win.,Vi behöver varandra för att överleva – men jag tänker ändå vinna.
+MENU_SOLO,Solo,Solo
+MENU_VS_BOTS,Play vs bots,Spela mot bottar
+MENU_LOCAL,Local multiplayer,Lokal multiplayer
+MENU_ONLINE,Online (coming soon),Online (kommer snart)
+MENU_LEADERBOARD,Leaderboard,Topplista
+MENU_ACCOUNT,Account,Konto
+MENU_SETTINGS,Settings,Inställningar
+MENU_QUIT,Quit,Avsluta
+MENU_GUEST,Playing as guest,Spelar som gäst
+MENU_SIGNED_IN,Signed in as %s,Inloggad som %s
+MVP_BUILDER,Top builder,Bästa byggare
+MVP_COMBO,Combo king,Combokung
+MVP_FINISHER,Finisher,Avslutare
+MVP_SPECIAL,Multiplier master,Multiplikatormästare
+ONLINE_TITLE,Online,Online
+ONLINE_COMING_SOON,"Online multiplayer is on its way. The game is already built for it – for now, try a match against bots.",Online-multiplayer är på väg. Spelet är redan byggt för det – prova en match mot bottar så länge.
+PAUSE_TITLE,Paused,Pausat
+PAUSE_RESUME,Resume,Fortsätt
+PAUSE_RESTART,Restart,Starta om
+PAUSE_QUIT,Main menu,Huvudmeny
+RESULTS_COOP,Team score: %d,Lagpoäng: %d
+RESULTS_GAME_OVER,Game over,Game over
+RESULTS_WINNER,%s wins!,%s vinner!
+RESULTS_STATS,rows %d · cells %d · combo %d,rader %d · celler %d · combo %d
+RESULTS_GUEST_NOTE,Playing as guest – sign in to save highscores and achievements.,Du spelar som gäst – logga in för att spara highscores och achievements.
+RESULTS_SAVED,Result saved to your account.,Resultatet sparades på ditt konto.
+RESULTS_REMATCH,Rematch,Igen
+RESULTS_MENU,Menu,Meny
+SETTINGS_TITLE,Settings,Inställningar
+SETTINGS_MASTER,Volume,Volym
+SETTINGS_MUSIC,Music,Musik
+SETTINGS_SFX,Sound effects,Ljudeffekter
+SETTINGS_GHOST,Ghost piece,Skuggkloss
+SETTINGS_SHAKE,Screen shake,Skärmskak
+SETTINGS_PARTICLES,Score particles,Poängpartiklar
+SETTINGS_PATTERNS,Color patterns (colorblind),Färgmönster (färgblindhet)
+SETTINGS_TOUCH,Touch controls,Pekkontroller
+SETTINGS_TOUCH_AUTO,Auto,Auto
+SETTINGS_TOUCH_ON,On,På
+SETTINGS_TOUCH_OFF,Off,Av
+SETTINGS_DAS,Auto-shift delay,Fördröjning auto-flytt
+SETTINGS_ARR,Auto-shift speed,Hastighet auto-flytt
+SETTINGS_LANGUAGE,Language,Språk
+SETTINGS_BOT_TRAINER,Bot trainer (dev),Bot-träning (dev)

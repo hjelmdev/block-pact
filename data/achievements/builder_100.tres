@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="AchievementDefinition" format=3]
+
+[ext_resource type="Script" path="res://core/achievement_definition.gd" id="1_b5em5"]
+
+[resource]
+script = ExtResource("1_b5em5")
+id = &"builder_100"
+title = "Master Builder"
+description = "Have 100 of your cells cleared in one match."
+stat = 2
+threshold = 100

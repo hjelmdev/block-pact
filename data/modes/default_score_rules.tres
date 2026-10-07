@@ -1,0 +1,7 @@
+[gd_resource type="Resource" script_class="ScoreRules" format=3]
+
+[ext_resource type="Script" path="res://core/rules/score_rules.gd" id="1_o72o4"]
+
+[resource]
+script = ExtResource("1_o72o4")
+multi_line_totals = PackedFloat32Array(0, 1, 3, 5, 8)

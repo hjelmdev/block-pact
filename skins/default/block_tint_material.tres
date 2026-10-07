@@ -1,0 +1,9 @@
+[gd_resource type="ShaderMaterial" format=3]
+
+[ext_resource type="Shader" path="res://skins/shaders/block_tint.gdshader" id="1_a4dm1"]
+
+[resource]
+shader = ExtResource("1_a4dm1")
+shader_parameter/edge_darkness = null
+shader_parameter/highlight_amount = null
+shader_parameter/saturation_boost = null

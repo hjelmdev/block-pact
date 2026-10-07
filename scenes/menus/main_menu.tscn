@@ -1,0 +1,123 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scenes/menus/main_menu.gd" id="1"]
+[ext_resource type="PackedScene" path="res://scenes/menus/menu_background.tscn" id="2"]
+
+[node name="MainMenu" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1")
+
+[node name="MenuBackground" parent="." instance=ExtResource("2")]
+layout_mode = 1
+
+[node name="Margin" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 16
+
+[node name="Scroll" type="ScrollContainer" parent="Margin"]
+layout_mode = 2
+horizontal_scroll_mode = 0
+
+[node name="Center" type="CenterContainer" parent="Margin/Scroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="VBox" type="VBoxContainer" parent="Margin/Scroll/Center"]
+custom_minimum_size = Vector2(280, 0)
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Title" type="Label" parent="Margin/Scroll/Center/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.55, 0.9, 1, 1)
+theme_override_colors/font_outline_color = Color(0.02, 0.05, 0.12, 1)
+theme_override_constants/outline_size = 12
+theme_override_font_sizes/font_size = 52
+text = "BLOCK PACT"
+horizontal_alignment = 1
+
+[node name="Tagline" type="Label" parent="Margin/Scroll/Center/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.8, 0.82, 0.95, 1)
+theme_override_font_sizes/font_size = 14
+text = "MENU_TAGLINE"
+horizontal_alignment = 1
+autowrap_mode = 3
+
+[node name="AccountStatus" type="Label" parent="Margin/Scroll/Center/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 0.65, 0.8, 1)
+theme_override_font_sizes/font_size = 13
+text = "Guest"
+horizontal_alignment = 1
+
+[node name="Gap" type="Control" parent="Margin/Scroll/Center/VBox"]
+custom_minimum_size = Vector2(0, 6)
+layout_mode = 2
+
+[node name="SoloButton" type="Button" parent="Margin/Scroll/Center/VBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 50)
+layout_mode = 2
+text = "MENU_SOLO"
+
+[node name="BotsButton" type="Button" parent="Margin/Scroll/Center/VBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 50)
+layout_mode = 2
+text = "MENU_VS_BOTS"
+
+[node name="PartyButton" type="Button" parent="Margin/Scroll/Center/VBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 50)
+layout_mode = 2
+text = "MENU_LOCAL"
+
+[node name="OnlineButton" type="Button" parent="Margin/Scroll/Center/VBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 50)
+layout_mode = 2
+text = "MENU_ONLINE"
+
+[node name="Row" type="HBoxContainer" parent="Margin/Scroll/Center/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="LeaderboardButton" type="Button" parent="Margin/Scroll/Center/VBox/Row"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+size_flags_horizontal = 3
+text = "MENU_LEADERBOARD"
+
+[node name="AccountButton" type="Button" parent="Margin/Scroll/Center/VBox/Row"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+size_flags_horizontal = 3
+text = "MENU_ACCOUNT"
+
+[node name="SettingsButton" type="Button" parent="Margin/Scroll/Center/VBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+text = "MENU_SETTINGS"
+
+[node name="QuitButton" type="Button" parent="Margin/Scroll/Center/VBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+text = "MENU_QUIT"

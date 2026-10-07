@@ -1,0 +1,171 @@
+[gd_resource type="Resource" script_class="SoundLibrary" format=3]
+
+[ext_resource type="Script" path="res://audio/sound_event.gd" id="1_6tcxe"]
+[ext_resource type="AudioStream" path="res://audio/sfx/move.wav" id="2_6s2uj"]
+[ext_resource type="AudioStream" path="res://audio/sfx/rotate.wav" id="3_lmet4"]
+[ext_resource type="AudioStream" path="res://audio/sfx/soft_drop.wav" id="4_hty4y"]
+[ext_resource type="AudioStream" path="res://audio/sfx/hard_drop.wav" id="5_7jle3"]
+[ext_resource type="AudioStream" path="res://audio/sfx/lock.wav" id="6_fq1od"]
+[ext_resource type="AudioStream" path="res://audio/sfx/hold.wav" id="7_8e42m"]
+[ext_resource type="AudioStream" path="res://audio/sfx/line_1.wav" id="8_cscw2"]
+[ext_resource type="AudioStream" path="res://audio/sfx/line_2.wav" id="9_8i3ld"]
+[ext_resource type="AudioStream" path="res://audio/sfx/line_3.wav" id="10_ss4h8"]
+[ext_resource type="AudioStream" path="res://audio/sfx/line_4.wav" id="11_xqe4s"]
+[ext_resource type="AudioStream" path="res://audio/sfx/combo.wav" id="12_drdoc"]
+[ext_resource type="AudioStream" path="res://audio/sfx/special_x.wav" id="13_enej3"]
+[ext_resource type="AudioStream" path="res://audio/sfx/score_arrive.wav" id="14_1w64g"]
+[ext_resource type="AudioStream" path="res://audio/sfx/level_up.wav" id="15_6e2i7"]
+[ext_resource type="AudioStream" path="res://audio/sfx/top_out.wav" id="16_xsoh0"]
+[ext_resource type="AudioStream" path="res://audio/sfx/game_over.wav" id="17_81hj0"]
+[ext_resource type="AudioStream" path="res://audio/sfx/countdown.wav" id="18_rg5mt"]
+[ext_resource type="AudioStream" path="res://audio/sfx/go.wav" id="19_rbdc3"]
+[ext_resource type="AudioStream" path="res://audio/sfx/ui_click.wav" id="20_dashu"]
+[ext_resource type="AudioStream" path="res://audio/sfx/ui_back.wav" id="21_ikyha"]
+[ext_resource type="AudioStream" path="res://audio/music/theme_loop.wav" id="22_kwk2y"]
+[ext_resource type="Script" path="res://audio/sound_library.gd" id="23_8f7ul"]
+
+[sub_resource type="Resource" id="Resource_opypk"]
+script = ExtResource("1_6tcxe")
+id = &"move"
+streams = Array[AudioStream]([ExtResource("2_6s2uj")])
+volume_db = -6.0
+pitch_random = 0.05
+max_polyphony = 2
+
+[sub_resource type="Resource" id="Resource_gg4nh"]
+script = ExtResource("1_6tcxe")
+id = &"rotate"
+streams = Array[AudioStream]([ExtResource("3_lmet4")])
+volume_db = -4.0
+pitch_random = 0.05
+max_polyphony = 2
+
+[sub_resource type="Resource" id="Resource_sgwhk"]
+script = ExtResource("1_6tcxe")
+id = &"soft_drop"
+streams = Array[AudioStream]([ExtResource("4_hty4y")])
+volume_db = -10.0
+max_polyphony = 1
+
+[sub_resource type="Resource" id="Resource_xm0ia"]
+script = ExtResource("1_6tcxe")
+id = &"hard_drop"
+streams = Array[AudioStream]([ExtResource("5_7jle3")])
+pitch_random = 0.08
+
+[sub_resource type="Resource" id="Resource_skipo"]
+script = ExtResource("1_6tcxe")
+id = &"lock"
+streams = Array[AudioStream]([ExtResource("6_fq1od")])
+volume_db = -3.0
+pitch_random = 0.1
+
+[sub_resource type="Resource" id="Resource_sdpk2"]
+script = ExtResource("1_6tcxe")
+id = &"hold"
+streams = Array[AudioStream]([ExtResource("7_8e42m")])
+volume_db = -4.0
+max_polyphony = 1
+
+[sub_resource type="Resource" id="Resource_w2jw8"]
+script = ExtResource("1_6tcxe")
+id = &"line_1"
+streams = Array[AudioStream]([ExtResource("8_cscw2")])
+volume_db = -2.0
+max_polyphony = 2
+
+[sub_resource type="Resource" id="Resource_e65tj"]
+script = ExtResource("1_6tcxe")
+id = &"line_2"
+streams = Array[AudioStream]([ExtResource("9_8i3ld")])
+volume_db = -2.0
+max_polyphony = 2
+
+[sub_resource type="Resource" id="Resource_r38a7"]
+script = ExtResource("1_6tcxe")
+id = &"line_3"
+streams = Array[AudioStream]([ExtResource("10_ss4h8")])
+volume_db = -1.0
+max_polyphony = 2
+
+[sub_resource type="Resource" id="Resource_6mck2"]
+script = ExtResource("1_6tcxe")
+id = &"line_4"
+streams = Array[AudioStream]([ExtResource("11_xqe4s")])
+max_polyphony = 2
+
+[sub_resource type="Resource" id="Resource_43t2d"]
+script = ExtResource("1_6tcxe")
+id = &"combo"
+streams = Array[AudioStream]([ExtResource("12_drdoc")])
+volume_db = -3.0
+max_polyphony = 2
+
+[sub_resource type="Resource" id="Resource_lfn84"]
+script = ExtResource("1_6tcxe")
+id = &"special_x"
+streams = Array[AudioStream]([ExtResource("13_enej3")])
+max_polyphony = 2
+
+[sub_resource type="Resource" id="Resource_847uf"]
+script = ExtResource("1_6tcxe")
+id = &"score_arrive"
+streams = Array[AudioStream]([ExtResource("14_1w64g")])
+volume_db = -8.0
+pitch_random = 0.1
+max_polyphony = 4
+
+[sub_resource type="Resource" id="Resource_b0cku"]
+script = ExtResource("1_6tcxe")
+id = &"level_up"
+streams = Array[AudioStream]([ExtResource("15_6e2i7")])
+volume_db = -2.0
+max_polyphony = 1
+
+[sub_resource type="Resource" id="Resource_qtgrl"]
+script = ExtResource("1_6tcxe")
+id = &"top_out"
+streams = Array[AudioStream]([ExtResource("16_xsoh0")])
+volume_db = -2.0
+max_polyphony = 1
+
+[sub_resource type="Resource" id="Resource_xxtun"]
+script = ExtResource("1_6tcxe")
+id = &"game_over"
+streams = Array[AudioStream]([ExtResource("17_81hj0")])
+volume_db = -2.0
+max_polyphony = 1
+
+[sub_resource type="Resource" id="Resource_bodc4"]
+script = ExtResource("1_6tcxe")
+id = &"countdown"
+streams = Array[AudioStream]([ExtResource("18_rg5mt")])
+volume_db = -4.0
+max_polyphony = 1
+
+[sub_resource type="Resource" id="Resource_k6myw"]
+script = ExtResource("1_6tcxe")
+id = &"go"
+streams = Array[AudioStream]([ExtResource("19_rbdc3")])
+volume_db = -3.0
+max_polyphony = 1
+
+[sub_resource type="Resource" id="Resource_rg682"]
+script = ExtResource("1_6tcxe")
+id = &"ui_click"
+streams = Array[AudioStream]([ExtResource("20_dashu")])
+volume_db = -6.0
+pitch_random = 0.05
+max_polyphony = 2
+
+[sub_resource type="Resource" id="Resource_a65qw"]
+script = ExtResource("1_6tcxe")
+id = &"ui_back"
+streams = Array[AudioStream]([ExtResource("21_ikyha")])
+volume_db = -6.0
+max_polyphony = 2
+
+[resource]
+script = ExtResource("23_8f7ul")
+events = Array[ExtResource("1_6tcxe")]([SubResource("Resource_opypk"), SubResource("Resource_gg4nh"), SubResource("Resource_sgwhk"), SubResource("Resource_xm0ia"), SubResource("Resource_skipo"), SubResource("Resource_sdpk2"), SubResource("Resource_w2jw8"), SubResource("Resource_e65tj"), SubResource("Resource_r38a7"), SubResource("Resource_6mck2"), SubResource("Resource_43t2d"), SubResource("Resource_lfn84"), SubResource("Resource_847uf"), SubResource("Resource_b0cku"), SubResource("Resource_qtgrl"), SubResource("Resource_xxtun"), SubResource("Resource_bodc4"), SubResource("Resource_k6myw"), SubResource("Resource_rg682"), SubResource("Resource_a65qw")])
+music = ExtResource("22_kwk2y")

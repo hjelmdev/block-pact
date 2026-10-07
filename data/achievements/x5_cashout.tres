@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="AchievementDefinition" format=3]
+
+[ext_resource type="Script" path="res://core/achievement_definition.gd" id="1_bp7y0"]
+
+[resource]
+script = ExtResource("1_bp7y0")
+id = &"x5_cashout"
+title = "Cash Out"
+description = "Get one of your special blocks cleared."
+stat = 5

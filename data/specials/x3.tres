@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="SpecialBlockType" format=3]
+
+[ext_resource type="Script" path="res://core/special_block_type.gd" id="1_uufyf"]
+
+[resource]
+script = ExtResource("1_uufyf")
+id = 2
+key = &"x3"
+multiplier = 3

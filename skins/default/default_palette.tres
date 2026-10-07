@@ -1,0 +1,63 @@
+[gd_resource type="Resource" script_class="PlayerPalette" format=3]
+
+[ext_resource type="Script" path="res://skins/player_appearance.gd" id="1_lqtpo"]
+[ext_resource type="Texture2D" path="res://skins/default/patterns/diagonal.png" id="2_kbrt0"]
+[ext_resource type="Texture2D" path="res://skins/default/patterns/dots.png" id="3_1aarn"]
+[ext_resource type="Texture2D" path="res://skins/default/patterns/cross.png" id="4_i8td2"]
+[ext_resource type="Texture2D" path="res://skins/default/patterns/stripes.png" id="5_ccutr"]
+[ext_resource type="Texture2D" path="res://skins/default/patterns/checker.png" id="6_yv8sl"]
+[ext_resource type="Texture2D" path="res://skins/default/patterns/ring.png" id="7_20nqu"]
+[ext_resource type="Texture2D" path="res://skins/default/patterns/diamond.png" id="8_slu3t"]
+[ext_resource type="Texture2D" path="res://skins/default/patterns/none.png" id="9_7cgdq"]
+[ext_resource type="Script" path="res://skins/player_palette.gd" id="10_hxdsm"]
+
+[sub_resource type="Resource" id="Resource_3fg4r"]
+script = ExtResource("1_lqtpo")
+color = Color(0.25, 0.85, 1, 1)
+pattern = ExtResource("2_kbrt0")
+
+[sub_resource type="Resource" id="Resource_du3bf"]
+script = ExtResource("1_lqtpo")
+color_name = "Purple"
+color = Color(0.72, 0.45, 1, 1)
+pattern = ExtResource("3_1aarn")
+
+[sub_resource type="Resource" id="Resource_6twkk"]
+script = ExtResource("1_lqtpo")
+color_name = "Green"
+color = Color(0.35, 0.95, 0.45, 1)
+pattern = ExtResource("4_i8td2")
+
+[sub_resource type="Resource" id="Resource_i011p"]
+script = ExtResource("1_lqtpo")
+color_name = "Yellow"
+color = Color(1, 0.86, 0.25, 1)
+pattern = ExtResource("5_ccutr")
+
+[sub_resource type="Resource" id="Resource_qtk75"]
+script = ExtResource("1_lqtpo")
+color_name = "Orange"
+color = Color(1, 0.55, 0.2, 1)
+pattern = ExtResource("6_yv8sl")
+
+[sub_resource type="Resource" id="Resource_qn0x4"]
+script = ExtResource("1_lqtpo")
+color_name = "Pink"
+color = Color(1, 0.42, 0.72, 1)
+pattern = ExtResource("7_20nqu")
+
+[sub_resource type="Resource" id="Resource_4wxbe"]
+script = ExtResource("1_lqtpo")
+color_name = "Red"
+color = Color(1, 0.3, 0.3, 1)
+pattern = ExtResource("8_slu3t")
+
+[sub_resource type="Resource" id="Resource_54a2f"]
+script = ExtResource("1_lqtpo")
+color_name = "Blue"
+color = Color(0.32, 0.5, 1, 1)
+pattern = ExtResource("9_7cgdq")
+
+[resource]
+script = ExtResource("10_hxdsm")
+appearances = Array[ExtResource("1_lqtpo")]([SubResource("Resource_3fg4r"), SubResource("Resource_du3bf"), SubResource("Resource_6twkk"), SubResource("Resource_i011p"), SubResource("Resource_qtk75"), SubResource("Resource_qn0x4"), SubResource("Resource_4wxbe"), SubResource("Resource_54a2f")])

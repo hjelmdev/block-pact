@@ -1,0 +1,317 @@
+class_name BoardView
+extends Control
+## Renders a MatchSimulation's board. Read-only: never changes the simulation.
+##
+## Layers (child nodes, see board_view.tscn) so each can have its own material:
+##   Cells   – locked + active cells, tinted by BlockSkin.cell_material
+##   Overlay – ghosts, colorblind patterns, special glyphs, flashes
+##   Glow    – additive soft glow
+## All visuals come from the BlockSkin / PlayerPalette resources.
+
+signal geometry_changed()
+
+@export var skin: BlockSkin
+@export var palette: PlayerPalette
+## Extra empty space around the board, in cells.
+@export var padding_cells: float = 0.25
+## 0 = top, 0.5 = centered, 1 = bottom (portrait layouts hug the controls).
+@export_range(0.0, 1.0) var vertical_align: float = 0.5:
+	set(v):
+		vertical_align = v
+		_recalc_geometry()
+
+var sim: MatchSimulation
+var setup: MatchSetup
+## Player ids whose ghost piece is shown (local humans by default).
+var ghost_players: Array[int] = []
+var show_patterns: bool = false
+var show_ghost: bool = true
+
+var cell_size: float = 16.0
+var board_origin: Vector2 = Vector2.ZERO
+var shake_offset: Vector2 = Vector2.ZERO
+
+var _flashes: Dictionary = {}  # Vector2i -> time left (sec)
+var _shake_strength: float = 0.0
+var _time: float = 0.0
+
+@onready var _cells_layer: BoardLayer = $Cells
+@onready var _overlay_layer: BoardLayer = $Overlay
+@onready var _glow_layer: BoardLayer = $Glow
+
+
+func _ready() -> void:
+	add_to_group(&"match_presenter")
+	if skin == null:
+		skin = Assets.skin()
+	if palette == null:
+		palette = Assets.palette()
+	_apply_skin()
+	resized.connect(_recalc_geometry)
+	show_patterns = GameSettings.get_value("video", "color_patterns", false)
+	show_ghost = GameSettings.get_value("video", "show_ghost", true)
+	GameSettings.setting_changed.connect(_on_setting_changed)
+
+
+func bind_match(p_sim: MatchSimulation, p_setup: MatchSetup, _controller: Node) -> void:
+	sim = p_sim
+	setup = p_setup
+	sim.board_changed.connect(_redraw_all)
+	sim.piece_moved.connect(_on_piece_changed)
+	sim.piece_rotated.connect(func(_p, _k): _on_piece_changed(_p))
+	sim.piece_spawned.connect(_on_piece_changed)
+	sim.piece_held.connect(_on_piece_changed)
+	sim.piece_locked.connect(_on_piece_locked)
+	sim.piece_hard_dropped.connect(_on_hard_drop)
+	sim.lines_cleared.connect(_on_lines_cleared)
+	_recalc_geometry()
+	_redraw_all()
+
+
+func set_skin(new_skin: BlockSkin) -> void:
+	skin = new_skin
+	_apply_skin()
+	_redraw_all()
+
+
+# --------------------------------------------------------------------------
+# Geometry helpers (also used by effects)
+
+func board_pixel_size() -> Vector2:
+	if sim == null:
+		return Vector2.ZERO
+	return Vector2(sim.board.width, sim.board.visible_height()) * cell_size
+
+
+## Local rect of a cell given in board coordinates (row 0 = top hidden row).
+func cell_rect(x: int, y: int) -> Rect2:
+	var vy := y - sim.board.hidden_rows
+	return Rect2(board_origin + shake_offset + Vector2(x, vy) * cell_size, Vector2(cell_size, cell_size))
+
+
+func cell_center_global(x: int, y: int) -> Vector2:
+	return get_global_transform() * cell_rect(x, y).get_center()
+
+
+func player_color(player_id: int) -> Color:
+	return appearance(player_id).color
+
+
+func appearance(player_id: int) -> PlayerAppearance:
+	var idx := player_id
+	if setup and player_id >= 0 and player_id < setup.slots.size():
+		idx = setup.slots[player_id].color_index
+	return palette.get_appearance(idx)
+
+
+func shake(strength: float) -> void:
+	if GameSettings.get_value("video", "screen_shake", true):
+		_shake_strength = maxf(_shake_strength, strength)
+
+
+func flash_cells(cells: Array[Vector2i], duration := 0.18) -> void:
+	for c in cells:
+		_flashes[c] = duration
+
+
+# --------------------------------------------------------------------------
+
+func _process(delta: float) -> void:
+	_time += delta
+	var need_overlay := false
+	if not _flashes.is_empty():
+		for k in _flashes.keys():
+			_flashes[k] -= delta
+			if _flashes[k] <= 0.0:
+				_flashes.erase(k)
+		need_overlay = true
+	if _shake_strength > 0.01:
+		shake_offset = Vector2(randf_range(-1, 1), randf_range(-1, 1)) * _shake_strength
+		_shake_strength = lerpf(_shake_strength, 0.0, minf(1.0, delta * 14.0))
+		_redraw_all()
+	elif shake_offset != Vector2.ZERO:
+		shake_offset = Vector2.ZERO
+		_redraw_all()
+	if need_overlay:
+		_overlay_layer.queue_redraw()
+	_glow_layer.queue_redraw()  # glow pulses
+
+
+func _recalc_geometry() -> void:
+	if sim == null:
+		return
+	var w := float(sim.board.width) + padding_cells * 2.0
+	var h := float(sim.board.visible_height()) + padding_cells * 2.0
+	var fit := minf(size.x / w, size.y / h)
+	cell_size = maxf(4.0, floorf(fit))
+	var px := board_pixel_size()
+	board_origin = Vector2((size.x - px.x) * 0.5, (size.y - px.y) * vertical_align).floor()
+	geometry_changed.emit()
+	_redraw_all()
+
+
+func _redraw_all() -> void:
+	queue_redraw()
+	if is_node_ready():
+		_cells_layer.queue_redraw()
+		_overlay_layer.queue_redraw()
+		_glow_layer.queue_redraw()
+
+
+func _on_piece_changed(_player_id: int) -> void:
+	_cells_layer.queue_redraw()
+	_overlay_layer.queue_redraw()
+
+
+func _on_piece_locked(_player_id: int, cells: Array[Vector2i]) -> void:
+	flash_cells(cells, 0.12)
+
+
+func _on_hard_drop(_player_id: int, rows: int) -> void:
+	if rows > 2:
+		shake(minf(1.0 + rows * 0.15, 4.0))
+
+
+func _on_lines_cleared(result: LineClearResult) -> void:
+	shake(2.0 + result.line_count() * 1.5)
+
+
+func _on_setting_changed(section: String, key: String, value: Variant) -> void:
+	if section == "video" and key == "color_patterns":
+		show_patterns = value
+		_redraw_all()
+	elif section == "video" and key == "show_ghost":
+		show_ghost = value
+		_redraw_all()
+
+
+func _apply_skin() -> void:
+	if not is_node_ready():
+		return
+	_cells_layer.material = skin.cell_material if skin.tint_with_shader else null
+	var add := CanvasItemMaterial.new()
+	add.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
+	_glow_layer.material = add
+
+
+# --------------------------------------------------------------------------
+# Drawing (called by BoardLayer children)
+
+func _draw() -> void:
+	if sim == null:
+		return
+	var px := board_pixel_size()
+	var r := Rect2(board_origin + shake_offset, px)
+	draw_rect(r.grow(2.0), skin.board_border, true)
+	draw_rect(r, skin.board_background, true)
+	if skin.grid_texture:
+		for y in sim.board.visible_height():
+			for x in sim.board.width:
+				draw_texture_rect(skin.grid_texture, Rect2(r.position + Vector2(x, y) * cell_size, Vector2(cell_size, cell_size)), false, skin.grid_tint)
+
+
+func draw_cells_layer(layer: CanvasItem) -> void:
+	if sim == null or skin.cell_texture == null:
+		return
+	var b := sim.board
+	for y in range(b.hidden_rows, b.height):
+		for x in b.width:
+			var owner := b.owners[b.idx(x, y)]
+			if owner == BoardState.EMPTY:
+				continue
+			var col := player_color(owner) if skin.modulate_cells else Color.WHITE
+			layer.draw_texture_rect(skin.cell_texture, cell_rect(x, y), false, col)
+	for p in sim.players:
+		if p.active == null:
+			continue
+		var col := player_color(p.id) if skin.modulate_cells else Color.WHITE
+		col = Color(col.r * skin.active_brightness, col.g * skin.active_brightness, col.b * skin.active_brightness, 1.0)
+		for c in p.active.get_cells():
+			if c.y >= b.hidden_rows:
+				layer.draw_texture_rect(skin.cell_texture, cell_rect(c.x, c.y), false, col)
+
+
+func draw_overlay_layer(layer: CanvasItem) -> void:
+	if sim == null:
+		return
+	var b := sim.board
+	# Ghosts first (under the specials/patterns of the active piece).
+	if show_ghost and skin.ghost_texture:
+		for pid in ghost_players:
+			var p := sim.get_player(pid)
+			if p == null or p.active == null:
+				continue
+			var col := player_color(pid)
+			col.a = skin.ghost_alpha
+			for c in sim.get_ghost_cells(pid):
+				if c.y >= b.hidden_rows:
+					layer.draw_texture_rect(skin.ghost_texture, cell_rect(c.x, c.y), false, col)
+	# Locked: patterns + specials
+	for y in range(b.hidden_rows, b.height):
+		for x in b.width:
+			var i := b.idx(x, y)
+			var owner := b.owners[i]
+			if owner == BoardState.EMPTY:
+				continue
+			_draw_cell_decor(layer, x, y, owner, b.specials[i])
+	# Active pieces: patterns + specials
+	for p in sim.players:
+		if p.active == null:
+			continue
+		var cells := p.active.get_cells()
+		for idx in cells.size():
+			var c := cells[idx]
+			if c.y >= b.hidden_rows:
+				_draw_cell_decor(layer, c.x, c.y, p.id, p.active.special_at_index(idx))
+	# Lock flashes
+	for c: Vector2i in _flashes:
+		if c.y >= b.hidden_rows:
+			var a: float = clampf(_flashes[c] / 0.18, 0.0, 1.0) * 0.6
+			layer.draw_rect(cell_rect(c.x, c.y), Color(1, 1, 1, a), true)
+
+
+func _draw_cell_decor(layer: CanvasItem, x: int, y: int, owner: int, special: int) -> void:
+	if show_patterns:
+		var app := appearance(owner)
+		if app.pattern:
+			layer.draw_texture_rect(app.pattern, cell_rect(x, y), false, Color(0, 0, 0, 0.9))
+	if special > 0:
+		var t := sim.get_special_type(special)
+		if t:
+			var tex := skin.get_special_overlay(t.key)
+			if tex:
+				layer.draw_texture_rect(tex, cell_rect(x, y), false)
+
+
+func draw_glow_layer(layer: CanvasItem) -> void:
+	if sim == null or skin.glow_texture == null:
+		return
+	var b := sim.board
+	var gsize := Vector2(cell_size, cell_size) * skin.glow_scale
+	var pulse := 0.75 + 0.25 * sin(_time * skin.glow_pulse_speed)
+	if skin.glow_strength_locked > 0.0:
+		for y in range(b.hidden_rows, b.height):
+			for x in b.width:
+				var i := b.idx(x, y)
+				var owner := b.owners[i]
+				if owner == BoardState.EMPTY:
+					continue
+				var strength := skin.glow_strength_special * pulse if b.specials[i] > 0 else skin.glow_strength_locked
+				_glow_at(layer, x, y, owner, strength, gsize * (1.4 if b.specials[i] > 0 else 1.0))
+	for p in sim.players:
+		if p.active == null:
+			continue
+		var cells := p.active.get_cells()
+		for idx in cells.size():
+			var c := cells[idx]
+			if c.y < b.hidden_rows:
+				continue
+			var special := p.active.special_at_index(idx) > 0
+			_glow_at(layer, c.x, c.y, p.id, skin.glow_strength_special * pulse if special else skin.glow_strength_active, gsize * (1.4 if special else 1.0))
+
+
+func _glow_at(layer: CanvasItem, x: int, y: int, owner: int, strength: float, gsize: Vector2) -> void:
+	var col := player_color(owner)
+	col.a = strength
+	var center := cell_rect(x, y).get_center()
+	layer.draw_texture_rect(skin.glow_texture, Rect2(center - gsize * 0.5, gsize), false, col)

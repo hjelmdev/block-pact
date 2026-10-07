@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="AchievementDefinition" format=3]
+
+[ext_resource type="Script" path="res://core/achievement_definition.gd" id="1_d6qwq"]
+
+[resource]
+script = ExtResource("1_d6qwq")
+id = &"score_10k"
+title = "Five Digits"
+description = "Score 10 000 points in one match."
+threshold = 10000

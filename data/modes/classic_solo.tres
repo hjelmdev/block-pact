@@ -1,0 +1,33 @@
+[gd_resource type="Resource" script_class="GameModeConfig" format=3]
+
+[ext_resource type="Script" path="res://core/board_size_rule.gd" id="1_jw12u"]
+[ext_resource type="Resource" path="res://data/pieces/standard_pieces.tres" id="2_70f1e"]
+[ext_resource type="Script" path="res://core/rules/match_rule.gd" id="3_m0lp7"]
+[ext_resource type="Resource" path="res://data/modes/default_score_rules.tres" id="4_6pq12"]
+[ext_resource type="Script" path="res://core/game_mode_config.gd" id="5_2ow6l"]
+[ext_resource type="Script" path="res://core/special_block_type.gd" id="6_3clpa"]
+[ext_resource type="Resource" path="res://data/specials/x5.tres" id="7_ylcqy"]
+[ext_resource type="Script" path="res://core/rules/win_condition.gd" id="8_eqc7u"]
+
+[sub_resource type="Resource" id="Resource_oula5"]
+script = ExtResource("1_jw12u")
+max_players = 1
+width = 10
+height = 20
+
+[sub_resource type="Resource" id="Resource_opkni"]
+script = ExtResource("8_eqc7u")
+
+[resource]
+script = ExtResource("5_2ow6l")
+mode_id = &"classic_solo"
+display_name = "Classic"
+description = "Solo play on a classic 10×20 board."
+max_players = 1
+board_sizes = Array[ExtResource("1_jw12u")]([SubResource("Resource_oula5")])
+piece_set = ExtResource("2_70f1e")
+special_chance = 0.08
+special_types = Array[ExtResource("6_3clpa")]([ExtResource("7_ylcqy")])
+gravity_ticks = PackedInt32Array(48, 43, 38, 33, 28, 23, 18, 13, 9, 7, 6, 5, 4, 4, 3, 3, 2, 2, 1)
+score_rules = ExtResource("4_6pq12")
+win_condition = SubResource("Resource_opkni")

@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="AchievementDefinition" format=3]
+
+[ext_resource type="Script" path="res://core/achievement_definition.gd" id="1_h4wyt"]
+
+[resource]
+script = ExtResource("1_h4wyt")
+id = &"first_line"
+title = "First Pact"
+description = "Complete your first row."
+stat = 1

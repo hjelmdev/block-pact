@@ -1,0 +1,55 @@
+[gd_resource type="Resource" script_class="PieceSet" format=3]
+
+[ext_resource type="Script" path="res://core/piece_shape.gd" id="1_k312i"]
+[ext_resource type="Script" path="res://core/piece_set.gd" id="2_yecmg"]
+
+[sub_resource type="Resource" id="Resource_r1psg"]
+script = ExtResource("1_k312i")
+id = &"I"
+display_name = "I"
+cells = Array[Vector2i]([Vector2i(0, 1), Vector2i(1, 1), Vector2i(2, 1), Vector2i(3, 1)])
+box_size = 4
+kick_table = &"i"
+
+[sub_resource type="Resource" id="Resource_d10yq"]
+script = ExtResource("1_k312i")
+id = &"O"
+display_name = "O"
+cells = Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0), Vector2i(0, 1), Vector2i(1, 1)])
+box_size = 2
+kick_table = &"none"
+can_rotate = false
+
+[sub_resource type="Resource" id="Resource_83if8"]
+script = ExtResource("1_k312i")
+id = &"T"
+display_name = "T"
+cells = Array[Vector2i]([Vector2i(1, 0), Vector2i(0, 1), Vector2i(1, 1), Vector2i(2, 1)])
+
+[sub_resource type="Resource" id="Resource_nxytx"]
+script = ExtResource("1_k312i")
+id = &"S"
+display_name = "S"
+cells = Array[Vector2i]([Vector2i(1, 0), Vector2i(2, 0), Vector2i(0, 1), Vector2i(1, 1)])
+
+[sub_resource type="Resource" id="Resource_1jbac"]
+script = ExtResource("1_k312i")
+id = &"Z"
+display_name = "Z"
+cells = Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0), Vector2i(1, 1), Vector2i(2, 1)])
+
+[sub_resource type="Resource" id="Resource_af8wk"]
+script = ExtResource("1_k312i")
+id = &"J"
+display_name = "J"
+cells = Array[Vector2i]([Vector2i(0, 0), Vector2i(0, 1), Vector2i(1, 1), Vector2i(2, 1)])
+
+[sub_resource type="Resource" id="Resource_k5bfq"]
+script = ExtResource("1_k312i")
+id = &"L"
+display_name = "L"
+cells = Array[Vector2i]([Vector2i(2, 0), Vector2i(0, 1), Vector2i(1, 1), Vector2i(2, 1)])
+
+[resource]
+script = ExtResource("2_yecmg")
+pieces = Array[ExtResource("1_k312i")]([SubResource("Resource_r1psg"), SubResource("Resource_d10yq"), SubResource("Resource_83if8"), SubResource("Resource_nxytx"), SubResource("Resource_1jbac"), SubResource("Resource_af8wk"), SubResource("Resource_k5bfq")])
