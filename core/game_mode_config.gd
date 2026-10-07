@@ -34,7 +34,9 @@ enum TeamMode {
 ## Same piece sequence for every player (else each player has its own seed).
 @export var shared_sequence: bool = false
 ## Whether falling pieces of different players block each other.
-@export var active_piece_collision: bool = true
+@export var active_piece_collision: bool = false
+## How much of the board width the spawn lanes cover (1 = edge to edge).
+@export_range(0.1, 1.0) var spawn_spread: float = 0.6
 @export_range(0.0, 1.0) var special_chance: float = 0.12
 @export var special_types: Array[SpecialBlockType] = []
 

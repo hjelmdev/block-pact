@@ -11,6 +11,8 @@ enum Kind { LOCAL_HUMAN, BOT, REMOTE }
 @export var input_device: StringName = &"kb_solo"
 ## For BOT: id of a BotProfile in res://ai/profiles/ (e.g. &"normal").
 @export var bot_profile_id: StringName = &"normal"
+## For BOT: id of a BotPersonality in res://data/bots/ ("" = none).
+@export var bot_personality_id: StringName = &""
 ## Index into the PlayerPalette (visual only).
 @export var color_index: int = 0
 ## -1 = let the game mode decide.
@@ -24,7 +26,7 @@ enum Kind { LOCAL_HUMAN, BOT, REMOTE }
 func to_dict() -> Dictionary:
 	return {
 		"display_name": display_name, "kind": kind, "input_device": String(input_device),
-		"bot_profile_id": String(bot_profile_id), "color_index": color_index, "team": team,
+		"bot_profile_id": String(bot_profile_id), "bot_personality_id": String(bot_personality_id), "color_index": color_index, "team": team,
 		"user_id": user_id, "peer_id": peer_id,
 	}
 
@@ -35,6 +37,7 @@ static func from_dict(d: Dictionary) -> PlayerSlot:
 	s.kind = d.get("kind", Kind.LOCAL_HUMAN)
 	s.input_device = StringName(d.get("input_device", "kb_solo"))
 	s.bot_profile_id = StringName(d.get("bot_profile_id", "normal"))
+	s.bot_personality_id = StringName(d.get("bot_personality_id", ""))
 	s.color_index = d.get("color_index", 0)
 	s.team = d.get("team", -1)
 	s.user_id = d.get("user_id", "")

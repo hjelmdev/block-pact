@@ -68,6 +68,9 @@ func _create_sources() -> void:
 					profile = BotLearning.trial_profile()
 				else:
 					profile = BotProfile.load_profile(slot.bot_profile_id)
+				var personality := BotPersonality.load_personality(slot.bot_personality_id)
+				if personality:
+					profile = personality.apply_to(profile)
 				src = BotInputSource.new(profile)
 			PlayerSlot.Kind.REMOTE:
 				# Placeholder until online play exists: a remote seat idles.

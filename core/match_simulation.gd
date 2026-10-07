@@ -56,6 +56,10 @@ var _next_uid: int = 1
 func _init(p_setup: MatchSetup) -> void:
 	setup = p_setup
 	config = p_setup.mode
+	if not p_setup.rule_overrides.is_empty():
+		config = p_setup.mode.duplicate()
+		for key: String in p_setup.rule_overrides:
+			config.set(key, p_setup.rule_overrides[key])
 	_score_rules = config.score_rules if config.score_rules else ScoreRules.new()
 	_win = config.win_condition if config.win_condition else WinCondition.new()
 	for r in config.rules:
@@ -80,7 +84,11 @@ func _init(p_setup: MatchSetup) -> void:
 		p.team = slot.team if slot.team >= 0 else config.team_for_slot(i, n)
 		var bag_seed := hash([p_setup.seed, "bag"]) if config.shared_sequence else hash([p_setup.seed, "bag", i])
 		p.bag = PieceBag.new(config.piece_set, bag_seed)
-		p.spawn_column = int((float(i) + 0.5) * float(board.width) / float(n))
+		# Spawn lanes are spread over the middle part of the board so players
+		# stay close enough to see (and fight over) each other's rows.
+		var spread := clampf(config.spawn_spread, 0.1, 1.0)
+		var margin := float(board.width) * (1.0 - spread) * 0.5
+		p.spawn_column = int(margin + (float(i) + 0.5) * float(board.width) * spread / float(n))
 		players.append(p)
 
 
@@ -444,6 +452,9 @@ func _lock(p: PlayerState) -> void:
 			combo_changed.emit(p.id, 0)
 	else:
 		_clear_rows(p, full)
+	# Without active-piece collision a falling piece may sit where this one
+	# just locked – lift it out.
+	_resolve_active_overlaps()
 	board_changed.emit()
 
 	if lock_out and not finished:

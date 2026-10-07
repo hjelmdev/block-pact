@@ -25,6 +25,11 @@ var _lane_half := 3.0
 var _base_heights := PackedInt32Array()
 var _base_holes := PackedInt32Array()
 var _base_holes_total := 0
+## Per row (before placement): leader id, leader count, fill count,
+## and the highest cell count of any player other than me.
+var _row_leader := PackedInt32Array()
+var _row_fill := PackedInt32Array()
+var _row_other_max := PackedInt32Array()
 
 
 func _init(p_profile: BotProfile) -> void:
@@ -88,6 +93,29 @@ func _snapshot(board: BoardState, me: int) -> void:
 		var o := board.owners[i]
 		_occ[i] = 1 if o != BoardState.EMPTY else 0
 		_own[i] = 1 if o == me else 0
+	_row_leader.resize(board.height)
+	_row_fill.resize(board.height)
+	_row_other_max.resize(board.height)
+	for y in board.height:
+		var counts := {}
+		var filled := 0
+		for x in board.width:
+			var o := board.owners[y * board.width + x]
+			if o != BoardState.EMPTY:
+				filled += 1
+				counts[o] = counts.get(o, 0) + 1
+		var leader := -1
+		var best := 0
+		var other_max := 0
+		for o: int in counts:
+			if counts[o] > best:
+				best = counts[o]
+				leader = o
+			if o != me:
+				other_max = maxi(other_max, counts[o])
+		_row_leader[y] = leader
+		_row_fill[y] = filled
+		_row_other_max[y] = other_max
 
 
 ## Returns Vector2i(height, holes) for column x, skipping rows in `skip`.
@@ -127,13 +155,12 @@ func _snapshot_actives(sim: MatchSimulation, me: int) -> void:
 	_blk.fill(0)
 	_busy_cols.resize(b.width)
 	_busy_cols.fill(-1)
-	if not sim.config.active_piece_collision:
-		return
+	var collide := sim.config.active_piece_collision
 	for other in sim.players:
 		if other.id == me or other.active == null:
 			continue
 		for c in other.active.get_cells():
-			if b.in_bounds(c.x, c.y):
+			if collide and b.in_bounds(c.x, c.y):
 				_blk[b.idx(c.x, c.y)] = 1
 			if c.x >= 0 and c.x < b.width:
 				_busy_cols[c.x] = maxi(_busy_cols[c.x], c.y)
@@ -197,6 +224,8 @@ func _score_placement(board: BoardState, rel: Array[Vector2i], pos: Vector2i, pl
 	var special_cleared := 0.0
 	var own_row_fill := 0.0
 	var row_fill := 0.0
+	var steals := 0
+	var sabotage := 0
 	var rows_touched := {}
 	for c in rel:
 		rows_touched[c.y + pos.y] = true
@@ -215,6 +244,8 @@ func _score_placement(board: BoardState, rel: Array[Vector2i], pos: Vector2i, pl
 			cleared_rows[y] = true
 			own_cleared += mine
 			other_cleared += w - mine
+			if _row_other_max[y] > mine:
+				steals += 1
 		else:
 			own_row_fill += float(mine) * float(filled) / float(w)
 			var r := float(filled) / float(w)
@@ -223,6 +254,17 @@ func _score_placement(board: BoardState, rel: Array[Vector2i], pos: Vector2i, pl
 		var sc: Vector2i = rel[special_idx] + pos
 		if cleared_rows.has(sc.y):
 			special_cleared = float(own_cleared) / float(maxi(lines, 1))
+
+	# Sabotage: gaps we cover in rows another player leads.
+	if _w[15] != 0.0:
+		for c in rel:
+			var cx := c.x + pos.x
+			var yy := c.y + pos.y + 1
+			while yy < h and _occ[yy * w + cx] == 0:
+				var leader := _row_leader[yy]
+				if leader >= 0 and leader != player.id and _row_fill[yy] * 2 >= w:
+					sabotage += 1
+				yy += 1
 
 	# Column features. Fast path: only re-scan the columns the piece touched.
 	var heights: PackedInt32Array
@@ -289,4 +331,6 @@ func _score_placement(board: BoardState, rel: Array[Vector2i], pos: Vector2i, pl
 	v += _w[11] * wells
 	v += _w[12] * contested
 	v += _w[13] * row_fill
+	v += _w[14] * steals
+	v += _w[15] * sabotage
 	return v

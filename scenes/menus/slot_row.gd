@@ -10,10 +10,12 @@ signal changed()
 @onready var _detail: OptionButton = %DetailOption
 @onready var _name: TextField = %NameField
 @onready var _remove: Button = %RemoveButton
+@onready var _personality: OptionButton = %PersonalityOption
 
 var slot: PlayerSlot
 var _devices: Array = []
 var _bot_ids: Array[StringName] = []
+var _personality_ids: Array[StringName] = []
 
 
 func _ready() -> void:
@@ -22,6 +24,16 @@ func _ready() -> void:
 	_kind.add_item(tr("LOBBY_BOT"), PlayerSlot.Kind.BOT)
 	_kind.item_selected.connect(func(_i): _on_kind_changed())
 	_detail.item_selected.connect(func(_i): _on_detail_changed())
+	_personality_ids = BotPersonality.list_ids()
+	for i in _personality_ids.size():
+		var p := BotPersonality.load_personality(_personality_ids[i])
+		_personality.add_item(tr(p.name_key) if p else String(_personality_ids[i]), i)
+		if p and p.description_key != "":
+			_personality.set_item_tooltip(i, tr(p.description_key))
+	_personality.item_selected.connect(func(i):
+		slot.bot_personality_id = _personality_ids[i]
+		slot.display_name = MatchFactory.bot_name(slot.color_index, slot.bot_personality_id)
+		changed.emit())
 	_name.value_committed.connect(func(v):
 		if slot:
 			slot.display_name = v if v.strip_edges() != "" else slot.display_name
@@ -35,6 +47,7 @@ func set_slot(p_slot: PlayerSlot, color: Color) -> void:
 	_kind.select(_kind.get_item_index(slot.kind))
 	_name.text = slot.display_name
 	_fill_detail()
+	_update_kind_ui()
 
 
 func set_removable(v: bool) -> void:
@@ -44,12 +57,24 @@ func set_removable(v: bool) -> void:
 func _on_kind_changed() -> void:
 	slot.kind = _kind.get_selected_id() as PlayerSlot.Kind
 	if slot.kind == PlayerSlot.Kind.BOT:
-		slot.display_name = "%s-bot" % MatchFactory.BOT_NAMES[slot.color_index % MatchFactory.BOT_NAMES.size()]
+		if slot.bot_personality_id == &"":
+			slot.bot_personality_id = _personality_ids[maxi(slot.color_index - 1, 0) % _personality_ids.size()]
+		slot.display_name = MatchFactory.bot_name(slot.color_index, slot.bot_personality_id)
 	else:
 		slot.display_name = "Player %d" % (slot.color_index + 1)
 	_name.text = slot.display_name
 	_fill_detail()
+	_update_kind_ui()
 	changed.emit()
+
+
+## Bots pick a personality instead of typing a name.
+func _update_kind_ui() -> void:
+	var bot := slot.kind == PlayerSlot.Kind.BOT
+	_name.visible = not bot
+	_personality.visible = bot
+	if bot:
+		_personality.select(maxi(_personality_ids.find(slot.bot_personality_id), 0))
 
 
 func _fill_detail() -> void:

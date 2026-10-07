@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="BotPersonality" format=3]
+
+[ext_resource type="Script" path="res://ai/bot_personality.gd" id="1_7o811"]
+
+[resource]
+script = ExtResource("1_7o811")
+id = &"thief"
+name_key = "PERSONALITY_THIEF"
+description_key = "PERSONALITY_THIEF_DESC"
+weight_overrides = {
+"w_contested": 0.0,
+"w_lane_distance": 0.0,
+"w_lines": 1.2,
+"w_other_cleared": 0.35,
+"w_own_cleared": 0.0,
+"w_steal": 3.0
+}
+skill_overrides = {
+"search_radius": 16
+}

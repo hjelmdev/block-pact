@@ -8,6 +8,9 @@ extends Resource
 @export var seed: int = 0
 ## Overrides the mode's board size when non-zero.
 @export var board_size_override: Vector2i = Vector2i.ZERO
+## Lobby choices that override GameModeConfig properties for this match,
+## e.g. {"active_piece_collision": false}.
+@export var rule_overrides: Dictionary = {}
 
 
 func player_count() -> int:
@@ -38,6 +41,7 @@ func to_dict() -> Dictionary:
 		"slots": arr,
 		"seed": seed,
 		"board_size_override": [board_size_override.x, board_size_override.y],
+		"rule_overrides": rule_overrides,
 	}
 
 
@@ -51,4 +55,5 @@ static func from_dict(d: Dictionary) -> MatchSetup:
 	m.seed = d.get("seed", 0)
 	var bs: Array = d.get("board_size_override", [0, 0])
 	m.board_size_override = Vector2i(bs[0], bs[1])
+	m.rule_overrides = d.get("rule_overrides", {})
 	return m

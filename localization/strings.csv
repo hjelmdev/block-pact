@@ -73,3 +73,17 @@ SETTINGS_DAS,Auto-shift delay,Fördröjning auto-flytt
 SETTINGS_ARR,Auto-shift speed,Hastighet auto-flytt
 SETTINGS_LANGUAGE,Language,Språk
 SETTINGS_BOT_TRAINER,Bot trainer (dev),Bot-träning (dev)
+LOBBY_COLLISION,Falling pieces collide,Fallande klossar krockar
+CALLOUT_QUAD,QUAD!,FYRA RADER!
+CALLOUT_MULTI,%d LINES!,%d RADER!
+CALLOUT_STOLEN,STOLEN from %s!,STULEN från %s!
+CALLOUT_COMBO,COMBO x%d,COMBO x%d
+CALLOUT_LEAD,%s takes the lead!,%s tar ledningen!
+PERSONALITY_BUILDER,Builder,Byggare
+PERSONALITY_BUILDER_DESC,Plays for the team and keeps the board alive.,Spelar för laget och håller brädet vid liv.
+PERSONALITY_THIEF,Thief,Tjuv
+PERSONALITY_THIEF_DESC,Hunts rows others built and finishes them first.,Jagar rader andra byggt och avslutar dem först.
+PERSONALITY_GREEDY,Greedy,Girig
+PERSONALITY_GREEDY_DESC,Builds its own rows and saves x5 blocks for them.,Bygger egna rader och sparar x5-block till dem.
+PERSONALITY_SABOTEUR,Saboteur,Sabotör
+PERSONALITY_SABOTEUR_DESC,Covers the gaps in your nearly finished rows.,Täcker luckorna i dina nästan klara rader.

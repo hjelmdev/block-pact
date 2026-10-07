@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="BotPersonality" format=3]
+
+[ext_resource type="Script" path="res://ai/bot_personality.gd" id="1_i8f16"]
+
+[resource]
+script = ExtResource("1_i8f16")
+id = &"greedy"
+name_key = "PERSONALITY_GREEDY"
+description_key = "PERSONALITY_GREEDY_DESC"
+weight_overrides = {
+"w_lines": 0.1,
+"w_other_cleared": -0.45,
+"w_own_cleared": 0.6,
+"w_own_row_fill": 0.5,
+"w_special_cleared": 3.0
+}

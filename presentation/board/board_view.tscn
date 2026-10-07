@@ -17,6 +17,15 @@ size_flags_vertical = 3
 mouse_filter = 2
 script = ExtResource("1")
 
+[node name="Meters" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+script = ExtResource("2")
+kind = 3
+
 [node name="Cells" type="Control" parent="."]
 layout_mode = 1
 anchors_preset = 15

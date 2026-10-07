@@ -44,6 +44,12 @@ extends Resource
 ## SpecialBlockType.key -> Texture2D overlay (e.g. &"x5": special_x5.png)
 @export var special_overlays: Dictionary = {}
 
+@export_group("Row meters")
+## Strip beside each row showing who owns most of it (0 = hidden).
+@export var row_meter_width: float = 0.4
+## Rows at least this full pulse to show they are about to be cleared.
+@export_range(0.0, 1.0) var row_meter_hot: float = 0.75
+
 @export_group("Effects")
 @export var particle_texture: Texture2D
 @export var line_flash_color: Color = Color(1, 1, 1, 0.85)

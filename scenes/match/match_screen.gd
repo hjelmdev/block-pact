@@ -9,6 +9,7 @@ const PANEL_SCENE := preload("res://presentation/hud/player_panel.tscn")
 @onready var audio: MatchAudio = $MatchAudio
 @onready var board_view: BoardView = %BoardView
 @onready var effect: LineClearEffect = %LineClearEffect
+@onready var callouts: BoardCallouts = %BoardCallouts
 @onready var left_col: VBoxContainer = %LeftPanels
 @onready var right_col: VBoxContainer = %RightPanels
 @onready var compact_row: HFlowContainer = %CompactPanels
@@ -38,6 +39,7 @@ func _ready() -> void:
 	effect.board_view = board_view
 	effect.anchor_provider = _score_anchor
 	effect.score_arrived.connect(_on_score_arrived)
+	callouts.board_view = board_view
 	Platform.layout_changed.connect(_apply_layout)
 	pause_button.pressed.connect(_pause)
 	pause_button.icon = Assets.icon(&"pause")
@@ -69,7 +71,23 @@ func _on_match_ready(p_sim: MatchSimulation, p_setup: MatchSetup) -> void:
 		var show_previews := humans.has(i) or n <= 4
 		panel.setup_panel(sim, i, board_view.player_color(i), show_previews, team_text)
 		panels[i] = panel
+	if n > 1 and setup.mode.team_mode != GameModeConfig.TeamMode.COOP:
+		sim.score_changed.connect(func(_p, _s, _d): _update_ranks())
 	_apply_layout(Platform.is_portrait())
+
+
+func _update_ranks() -> void:
+	var order := sim.players.duplicate()
+	order.sort_custom(func(a, b): return a.score > b.score)
+	for i in order.size():
+		var p: PlayerState = order[i]
+		var rank := 1
+		for q: PlayerState in order:
+			if q.score > p.score:
+				rank += 1
+		var panel: PlayerPanel = panels.get(p.id)
+		if panel:
+			panel.set_rank(rank, rank == 1 and p.score > 0 and (order.size() < 2 or order[1].score < p.score))
 
 
 func _apply_layout(portrait: bool) -> void:
@@ -181,6 +199,7 @@ func _restart() -> void:
 	var again := MatchSetup.new()
 	again.mode = setup.mode
 	again.board_size_override = setup.board_size_override
+	again.rule_overrides = setup.rule_overrides.duplicate()
 	var slots: Array[PlayerSlot] = []
 	for s in setup.slots:
 		slots.append(s.duplicate())

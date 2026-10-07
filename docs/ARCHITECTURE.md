@@ -40,13 +40,20 @@ Keyboard / Joypad / Touch / Bot / (Network) → InputSource.gather(tick) → int
 
 | Fråga | Beslut | Var |
 |---|---|---|
-| Kolliderar aktiva klossar? | Ja. Den som hård-droppar på en annan fallande kloss hovrar och låser när den landar | `GameModeConfig.active_piece_collision` |
+| Kolliderar aktiva klossar? | Nej som standard (val i lobbyn). Låser en kloss där en annan fallande kloss är, lyfts den fallande klossen upp | `GameModeConfig.active_piece_collision`, `MatchSetup.rule_overrides` |
 | Game over | Alla förlorar, högst poäng vinner (lag- och co-op-ranking per läge) | `WinCondition` |
-| Spawn | Egen kolumn per spelare. Om den är (nästan) begravd spawnar klossen på närmaste lediga plats, och det blir game over först när hela toppen är full | `MatchSimulation._find_spawn_x` |
+| Spawn | Egen kolumn per spelare, utspridda över mittersta 60 % av brädet (`spawn_spread`) så att spelarna hamnar nära varandra. Om den är (nästan) begravd spawnar klossen på närmaste lediga plats, och det blir game over först när hela toppen är full | `MatchSimulation._find_spawn_x` |
 | Poäng | 100 × (1/3/5/8) per rensning, fördelat efter ägd andel. +50 per rad till den som slutför raden. Combo +50/steg. Allt × level | `ScoreRules` |
 | x5 | Modell A: multiplicerar ägarens andel av raden | `ScoreRules.special_mode` |
 | Sekvens | 7-bag med egen seed per spelare (valbart gemensam) | `GameModeConfig.shared_sequence` |
 | Spelplan | 1p 10×20 · 2p 16×24 · 3p 20×24 · 4p 24×26 · 6p 32×26 · 8p 40×28 | `data/modes/*.tres` |
+
+## Konfliktkänsla ("battle")
+
+- **Radmätare** bredvid varje rad i ledarens färg. Rader som är nästan fulla pulserar (`BoardView.draw_meters_layer`, inställningar i `BlockSkin`).
+- **Utrop på brädet**: STULEN, flera rader, x5 och combo, plus en banner och ett ljud när någon tar ledningen (`presentation/effects/board_callouts.gd`).
+- **Placering (#1–#8)** och en guldram för ledaren i spelarpanelerna.
+- **Bot-personligheter** (`data/bots/*.tres`, `BotPersonality`) läggs ovanpå svårighetsgraden: *Byggare*, *Tjuv* (avslutar andras rader, `w_steal`), *Girig* (egna rader och x5) och *Sabotör* (täcker luckor i andras rader, `w_sabotage`).
 
 ## Online (nästa steg)
 

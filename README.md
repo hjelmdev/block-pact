@@ -46,6 +46,8 @@ Platshållarna genereras av `tools/generate_assets.py` och `tools/build_asset_re
 
 ## Bottar som lär sig
 
+Varje bot har en **svårighetsgrad** (hur bra och snabbt den spelar) och en **personlighet** (vad den vill): Byggare, Tjuv, Girig eller Sabotör. Båda väljs i lobbyn. Personligheterna är `.tres`-filer i `data/bots/`, så du kan justera dem eller lägga till nya utan kod.
+
 - `ai/profiles/{easy,normal,hard,adaptive}.tres`: vikter (hur boten bedömer en placering) och skill (reaktionstid, tempo och misstag).
 - **Träna nya vikter** med en genetisk algoritm via självspel på den gemensamma spelplanen:
   `godot --headless --path . -s res://tools/train_bots.gd -- --generations 10 --population 10`

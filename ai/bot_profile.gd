@@ -10,7 +10,7 @@ const RES_DIR := "res://ai/profiles/"
 const WEIGHT_NAMES: Array[StringName] = [
 	&"w_lines", &"w_own_cleared", &"w_other_cleared", &"w_holes", &"w_aggregate_height",
 	&"w_bumpiness", &"w_max_height", &"w_landing_height", &"w_own_row_fill",
-	&"w_special_cleared", &"w_lane_distance", &"w_wells", &"w_contested", &"w_row_fill",
+	&"w_special_cleared", &"w_lane_distance", &"w_wells", &"w_contested", &"w_row_fill", &"w_steal", &"w_sabotage",
 ]
 
 @export var id: StringName = &"normal"
@@ -48,6 +48,10 @@ const WEIGHT_NAMES: Array[StringName] = [
 @export var w_contested: float = -0.6
 ## Reward for adding cells to rows that are already nearly full (any owner).
 @export var w_row_fill: float = 1.0
+## Completing a row where another player owns more cells than you.
+@export var w_steal: float = 0.0
+## Covering gaps in rows that another player leads (blocking their clear).
+@export var w_sabotage: float = 0.0
 
 
 func get_weights() -> PackedFloat32Array:

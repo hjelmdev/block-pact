@@ -72,6 +72,9 @@ func _init() -> void:
 		[Sfx.GAME_OVER, "game_over", -2.0, 0.0, 1],
 		[Sfx.COUNTDOWN, "countdown", -4.0, 0.0, 1],
 		[Sfx.GO, "go", -3.0, 0.0, 1],
+		[Sfx.STEAL, "steal", -2.0, 0.0, 2],
+		[Sfx.LEAD_CHANGE, "lead_change", -4.0, 0.0, 1],
+		[Sfx.LEAD_LOST, "lead_lost", -3.0, 0.0, 1],
 		[Sfx.UI_CLICK, "ui_click", -6.0, 0.05, 2],
 		[Sfx.UI_BACK, "ui_back", -6.0, 0.0, 2],
 	]

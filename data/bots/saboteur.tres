@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="BotPersonality" format=3]
+
+[ext_resource type="Script" path="res://ai/bot_personality.gd" id="1_bdmyv"]
+
+[resource]
+script = ExtResource("1_bdmyv")
+id = &"saboteur"
+name_key = "PERSONALITY_SABOTEUR"
+description_key = "PERSONALITY_SABOTEUR_DESC"
+weight_overrides = {
+"w_holes": -2.8,
+"w_lane_distance": 0.0,
+"w_other_cleared": -0.6,
+"w_sabotage": 1.6
+}
+skill_overrides = {
+"search_radius": 14
+}

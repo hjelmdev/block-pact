@@ -286,6 +286,11 @@ def sfx():
     w("game_over", seq([tone(n_, d, "tri", rel=0.4) for n_, d in ((67, 0.2), (63, 0.2), (60, 0.2), (55, 0.6))]), 0.6)
     w("countdown", tone(76, 0.12, "square", 0.25), 0.4)
     w("go", tone(88, 0.3, "square", 0.25, 0.8), 0.45)
+    # Steal: quick "swipe" down-up with a little sparkle.
+    swipe = osc(1200, 0.12, "square", 0.25, sweep_to=500) * env(int(RATE * 0.12), 0.002, 0.6)
+    w("steal", seq([swipe, tone(88, 0.05, "square", 0.125), tone(95, 0.12, "square", 0.125, 0.8)]), 0.5)
+    w("lead_change", seq([tone(n_, 0.06, "square", 0.25) for n_ in (72, 76, 79)] + [tone(84, 0.22, "square", 0.25, 0.8)]), 0.45)
+    w("lead_lost", seq([tone(n_, 0.09, "tri") for n_ in (76, 72)] + [tone(67, 0.25, "tri", rel=0.8)]), 0.5)
     w("ui_click", tone(84, 0.025, "square", 0.25, 0.9), 0.25)
     w("ui_back", tone(72, 0.04, "square", 0.25, 0.9), 0.25)
 
@@ -327,11 +332,14 @@ def music():
 
 
 if __name__ == "__main__":
+    import sys
     for d in (TEX, PAT, SFX, MUSIC):
         os.makedirs(d, exist_ok=True)
-    block_base(); glow(); ghost(); cell_bg(); particle(); patterns()
-    special_glyph("x2", "x2"); special_glyph("x3", "x3"); special_glyph("x5", "x5")
-    icons()
+    only_sfx = "--sfx-only" in sys.argv
+    if not only_sfx:
+        block_base(); glow(); ghost(); cell_bg(); particle(); patterns()
+        special_glyph("x2", "x2"); special_glyph("x3", "x3"); special_glyph("x5", "x5")
+        icons()
+        music()
     sfx()
-    music()
     print("assets generated")

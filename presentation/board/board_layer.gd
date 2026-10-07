@@ -3,7 +3,7 @@ extends Control
 ## One drawing layer of a BoardView. Exists so each layer can have its own
 ## material (tint shader / additive glow) while BoardView owns the logic.
 
-enum Kind { CELLS, OVERLAY, GLOW }
+enum Kind { CELLS, OVERLAY, GLOW, METERS }
 
 @export var kind: Kind = Kind.CELLS
 
@@ -24,3 +24,5 @@ func _draw() -> void:
 			view.draw_overlay_layer(self)
 		Kind.GLOW:
 			view.draw_glow_layer(self)
+		Kind.METERS:
+			view.draw_meters_layer(self)

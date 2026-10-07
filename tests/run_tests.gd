@@ -110,6 +110,7 @@ func _test_determinism() -> void:
 
 func _test_active_collision() -> void:
 	var setup := _make_setup(2, 7)
+	setup.rule_overrides = {"active_piece_collision": true}
 	var sim := MatchSimulation.new(setup)
 	sim.start()
 	# Let both spawn.

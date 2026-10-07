@@ -33,6 +33,14 @@ placeholder_text = "LOBBY_NAME"
 max_length = 16
 script = ExtResource("2")
 
+[node name="PersonalityOption" type="OptionButton" parent="."]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(110, 44)
+layout_mode = 2
+size_flags_horizontal = 3
+clip_text = true
+
 [node name="RemoveButton" type="Button" parent="."]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(44, 44)

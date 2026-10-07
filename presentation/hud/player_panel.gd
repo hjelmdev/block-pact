@@ -17,6 +17,7 @@ var _wants_previews := true
 @onready var _swatch: ColorRect = %Swatch
 @onready var _name: Label = %NameLabel
 @onready var _team: Label = %TeamLabel
+@onready var _rank: Label = %RankLabel
 @onready var _score: Label = %ScoreLabel
 @onready var _info: Label = %InfoLabel
 @onready var _popup: Label = %PopupLabel
@@ -59,6 +60,19 @@ func set_compact(value: bool) -> void:
 		_previews.visible = not compact and _wants_previews
 		_info.visible = not compact
 		_refresh_previews()
+
+
+## Shows the current placing; the leader gets a gold badge and border.
+func set_rank(rank: int, is_leader: bool) -> void:
+	_rank.visible = rank > 0
+	_rank.text = "#%d" % rank
+	_rank.add_theme_color_override(&"font_color", Color(1, 0.84, 0.3) if is_leader else Color(0.65, 0.68, 0.8))
+	var sb := get_theme_stylebox(&"panel") as StyleBoxFlat
+	if sb:
+		sb.border_color = Color(1, 0.84, 0.3) if is_leader else _color.darkened(0.2)
+		sb.border_width_top = 2 if is_leader else 0
+		sb.border_width_right = 2 if is_leader else 0
+		sb.border_width_bottom = 2 if is_leader else 0
 
 
 ## Global position where flying score particles should land.

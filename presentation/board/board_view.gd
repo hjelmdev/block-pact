@@ -13,7 +13,7 @@ signal geometry_changed()
 @export var skin: BlockSkin
 @export var palette: PlayerPalette
 ## Extra empty space around the board, in cells.
-@export var padding_cells: float = 0.25
+@export var padding_cells: float = 0.75
 ## 0 = top, 0.5 = centered, 1 = bottom (portrait layouts hug the controls).
 @export_range(0.0, 1.0) var vertical_align: float = 0.5:
 	set(v):
@@ -38,6 +38,7 @@ var _time: float = 0.0
 @onready var _cells_layer: BoardLayer = $Cells
 @onready var _overlay_layer: BoardLayer = $Overlay
 @onready var _glow_layer: BoardLayer = $Glow
+@onready var _meters_layer: BoardLayer = $Meters
 
 
 func _ready() -> void:
@@ -135,6 +136,7 @@ func _process(delta: float) -> void:
 	if need_overlay:
 		_overlay_layer.queue_redraw()
 	_glow_layer.queue_redraw()  # glow pulses
+	_meters_layer.queue_redraw()
 
 
 func _recalc_geometry() -> void:
@@ -156,6 +158,7 @@ func _redraw_all() -> void:
 		_cells_layer.queue_redraw()
 		_overlay_layer.queue_redraw()
 		_glow_layer.queue_redraw()
+		_meters_layer.queue_redraw()
 
 
 func _on_piece_changed(_player_id: int) -> void:
@@ -281,6 +284,50 @@ func _draw_cell_decor(layer: CanvasItem, x: int, y: int, owner: int, special: in
 			var tex := skin.get_special_overlay(t.key)
 			if tex:
 				layer.draw_texture_rect(tex, cell_rect(x, y), false)
+
+
+## Who leads each row: thin strips left and right of the board in the
+## leader's color; nearly full rows pulse. Makes the whole board readable
+## at a glance even when you focus on your own corner.
+func draw_meters_layer(layer: CanvasItem) -> void:
+	if sim == null or skin.row_meter_width <= 0.0:
+		return
+	var b := sim.board
+	var mw := maxf(2.0, cell_size * skin.row_meter_width)
+	var gap := maxf(2.0, cell_size * 0.12)
+	var left_x := board_origin.x + shake_offset.x - gap - mw
+	var right_x := board_origin.x + shake_offset.x + float(b.width) * cell_size + gap
+	var pulse := 0.5 + 0.5 * sin(_time * 9.0)
+	for y in range(b.hidden_rows, b.height):
+		var counts := {}
+		var filled := 0
+		for x in b.width:
+			var o := b.owners[b.idx(x, y)]
+			if o != BoardState.EMPTY:
+				filled += 1
+				counts[o] = counts.get(o, 0) + 1
+		if filled == 0:
+			continue
+		var leader := -1
+		var best := 0
+		var tie := false
+		for o: int in counts:
+			if counts[o] > best:
+				best = counts[o]
+				leader = o
+				tie = false
+			elif counts[o] == best:
+				tie = true
+		var fill := float(filled) / float(b.width)
+		var col := Color(0.6, 0.6, 0.65) if tie else player_color(leader)
+		col.a = 0.25 + 0.6 * fill
+		if fill >= skin.row_meter_hot:
+			col = col.lightened(0.35 * pulse)
+			col.a = 0.85 + 0.15 * pulse
+		var ry := cell_rect(0, y).position.y + 1.0
+		var rh := cell_size - 2.0
+		layer.draw_rect(Rect2(left_x, ry, mw, rh), col, true)
+		layer.draw_rect(Rect2(right_x, ry, mw * fill, rh), col, true)
 
 
 func draw_glow_layer(layer: CanvasItem) -> void:

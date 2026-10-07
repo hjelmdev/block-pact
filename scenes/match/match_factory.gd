@@ -34,13 +34,26 @@ static func human_slot(index: int, device: StringName = &"") -> PlayerSlot:
 	return s
 
 
-static func bot_slot(index: int, profile_id: StringName = &"normal") -> PlayerSlot:
+static func bot_slot(index: int, profile_id: StringName = &"normal", personality_id: StringName = &"auto") -> PlayerSlot:
 	var s := PlayerSlot.new()
 	s.kind = PlayerSlot.Kind.BOT
 	s.bot_profile_id = profile_id
 	s.color_index = index
-	s.display_name = "%s-bot" % BOT_NAMES[index % BOT_NAMES.size()]
+	if personality_id == &"auto":
+		# Mix of styles so every match has a thief, a greedy one, …
+		var ids := BotPersonality.list_ids()
+		personality_id = ids[maxi(index - 1, 0) % ids.size()]
+	s.bot_personality_id = personality_id
+	s.display_name = bot_name(index, personality_id)
 	return s
+
+
+static func bot_name(index: int, personality_id: StringName) -> String:
+	var base: String = BOT_NAMES[index % BOT_NAMES.size()]
+	var p := BotPersonality.load_personality(personality_id)
+	if p == null:
+		return base + "-bot"
+	return "%s (%s)" % [base, TranslationServer.translate(p.name_key)]
 
 
 static func quick_solo() -> MatchSetup:
@@ -66,7 +79,7 @@ static func attract_mode(players: int = 3) -> MatchSetup:
 	m.mode = load_mode(&"shared_competition")
 	var slots: Array[PlayerSlot] = []
 	for i in players:
-		slots.append(bot_slot(i, &"hard"))
+		slots.append(bot_slot(i, &"hard", &"builder"))
 	m.slots = slots
 	m.seed = randi()
 	return m
