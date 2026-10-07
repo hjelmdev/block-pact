@@ -18,6 +18,17 @@ func _ready() -> void:
 	_menu.pressed.connect(func(): menu_requested.emit())
 
 
+## Online: the host returns everyone to the room; clients just wait.
+func set_rematch_text(text: String, visible_button: bool) -> void:
+	_rematch.visible = visible_button
+	if text != "":
+		_rematch.text = text
+	if not visible_button:
+		_note.text += ("\n" if _note.text != "" else "") + tr("ONLINE_WAITING_HOST")
+		_note.visible = true
+		_menu.grab_focus()
+
+
 func show_results(sim: MatchSimulation, setup: MatchSetup, ranking: Array, view: BoardView) -> void:
 	for c in _rows.get_children():
 		c.queue_free()

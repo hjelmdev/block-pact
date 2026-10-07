@@ -55,13 +55,34 @@ Keyboard / Joypad / Touch / Bot / (Network) → InputSource.gather(tick) → int
 - **Placering (#1–#8)** och en guldram för ledaren i spelarpanelerna.
 - **Bot-personligheter** (`data/bots/*.tres`, `BotPersonality`) läggs ovanpå svårighetsgraden: *Byggare*, *Tjuv* (avslutar andras rader, `w_steal`), *Girig* (egna rader och x5) och *Sabotör* (täcker luckor i andras rader, `w_sabotage`).
 
-## Online (nästa steg)
+## Online (peer-to-peer med host)
 
-`net/network_session.gd` beskriver planen: deterministisk lockstep där hosten skickar `MatchSetup.to_dict()` (inklusive seed) och varje peer skickar sina input-bitmasks per tick. Fjärrplatserna använder en `NetworkInputSource` som returnerar `InputCommand.NOT_READY` tills ramen har kommit, och då väntar `MatchController` automatiskt. WebSocket (relay) och WebRTC (med Supabase Realtime som signalering) fungerar båda i webbläsare. `MatchController.input_log` sparar redan alla inputs för replays och serverside-validering av highscores.
+```
+ Supabase Realtime (WebSocket)                 WebRTC (datakanaler, stjärna)
+ ┌──────────────────────────────┐             ┌──────────── Host (peer 1) ────────────┐
+ │ bp-lobbies  – Presence:       │             │  kör simuleringen + bottarna          │
+ │   publika rum (kod, läge, n)  │             │  reläar alla inputs till alla         │
+ │ bp-room-KOD – Presence: vem   │   signal    │  jämför state-hash var 120:e tick     │
+ │   Broadcast: hello/welcome,   │ ──────────► └──────▲───────────────▲────────────────┘
+ │   sdp, ice (WebRTC-signaler)  │                    │ input-bits    │
+ └──────────────────────────────┘             Klient (peer 2)    Klient (peer 3)
+```
+
+- **`services/net_service.gd` (autoload `Net`)**: rum, lobby och signalering. Hosten är auktoritet för lobbyn (läge, platser, bottar och krock-inställningen) och skickar `MSG_START` med `MatchSetup.to_dict()` inklusive seed.
+- **`net/realtime_client.gd`**: en minimal Supabase Realtime-klient (Phoenix-protokoll 1.0.0) med Broadcast och Presence. Den kräver inga tabeller.
+- **`net/net_lockstep.gd`**: deterministisk lockstep. Lokala platser samplas `delay` ticks i förväg (3–12 ticks, baserat på ping), och simuleringen tar tick T först när alla platsers input för T finns. Bottar körs bara hos hosten och deras inputs skickas som en människas.
+- **Frånkoppling**: lämnar en klient tar hosten över platsen med tomma inputs från exakt den tick den senast reläade, så matchen fortsätter. Lämnar hosten avslutas matchen för alla.
+- **Desync-skydd**: klienterna skickar en state-hash var 120:e tick och hosten jämför. Vid avvikelse visas en varning.
+- **WebRTC på desktop/editor** kräver GDExtensionen `addons/webrtc` (webrtc-native 1.1.0, Windows/Linux/macOS). Webbläsare har WebRTC inbyggt, så addonen exkluderas från webbexporten.
+- **NAT**: STUN (Google) används som standard. Spelare bakom strikta NAT:ar kan behöva en TURN-server, som läggs till i `BackendConfig.ice_servers`.
+- **Dedikerad server senare**: samma meddelanden (`NetProtocol`) kan implementeras av en headless Godot-server som tar host-rollen (peer 1). Då behövs ingen spelare som host, och servern kan validera highscores genom att spela upp input-loggen.
+
+Test utan internet: `tests/mock_realtime_server.gd` är en lokal Realtime-ersättare, och `tests/online_test.tscn` kör en host och en klient mot den. Båda spelar en match och skriver state-hashar som jämförs.
 
 ## Kända begränsningar och nästa steg
 
 - Bottarna är bra i 1–2 spelare men har svårare att samarbeta på stora brädor (6–8 spelare), där rader med enstaka hål blir kvar. Spelplanens storlek och gravitation för många spelare behöver speltestas.
 - Powerups finns som utbyggnadspunkt (`MatchRule`) men inget innehåll ännu.
 - Inloggning från desktop/editor använder en lokal callback-server på port 43117.
+- Online: om hostens webbläsarflik ligger i bakgrunden pausar webbläsaren spelet och alla får vänta. Det finns ingen TURN-server ännu.
 - Highscores skickas från klienten och kan fuskas. Se kommentaren i SQL-migrationen om validering via replay.

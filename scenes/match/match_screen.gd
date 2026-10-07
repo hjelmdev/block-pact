@@ -27,6 +27,8 @@ const PANEL_SCENE := preload("res://presentation/hud/player_panel.tscn")
 var sim: MatchSimulation
 var setup: MatchSetup
 var panels: Dictionary = {}  # player id -> PlayerPanel
+var _online := false
+var _notice: Label
 
 
 func _ready() -> void:
@@ -51,7 +53,14 @@ func _ready() -> void:
 	results_panel.menu_requested.connect(_quit)
 	pause_menu.hide()
 	results_panel.hide()
-	controller.start_match(setup)
+	var net_delay: int = Router.params.get("net_delay", -1)
+	_online = net_delay > 0
+	if _online:
+		controller.net_waiting.connect(_on_net_waiting)
+		controller.net_host_lost.connect(_on_host_lost)
+		controller.net_desync.connect(func(t): _show_notice(tr("ONLINE_DESYNC") % t, Color(1, 0.6, 0.4)))
+		Net.return_to_lobby.connect(_on_net_return_to_lobby)
+	controller.start_match(setup, net_delay)
 	AudioManager.play_music()
 
 
@@ -203,7 +212,50 @@ func _resume() -> void:
 	get_tree().paused = false
 
 
+# --- Online helpers ---------------------------------------------------------
+
+func _show_notice(text: String, color := Color(1, 1, 1)) -> void:
+	if _notice == null:
+		_notice = Label.new()
+		_notice.add_theme_font_size_override(&"font_size", 22)
+		_notice.add_theme_color_override(&"font_outline_color", Color(0, 0, 0, 0.9))
+		_notice.add_theme_constant_override(&"outline_size", 8)
+		_notice.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		_notice.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		add_child(_notice)
+		_notice.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+		_notice.set_anchors_and_offsets_preset(Control.PRESET_HCENTER_WIDE)
+	_notice.text = text
+	_notice.add_theme_color_override(&"font_color", color)
+	_notice.visible = text != ""
+
+
+func _on_net_waiting(slots: Array) -> void:
+	if slots.is_empty():
+		_show_notice("")
+		return
+	var names: PackedStringArray = []
+	for i: int in slots:
+		names.append(sim.get_player(i).display_name)
+	_show_notice(tr("ONLINE_WAITING_FOR") % ", ".join(names), Color(1, 0.9, 0.5))
+
+
+func _on_host_lost() -> void:
+	_show_notice(tr("ONLINE_HOST_LEFT"), Color(1, 0.55, 0.5))
+	await get_tree().create_timer(3.0).timeout
+	Router.goto(&"online")
+
+
+func _on_net_return_to_lobby() -> void:
+	Router.goto(&"online_lobby")
+
+
 func _restart() -> void:
+	if _online:
+		if Net.is_host:
+			Net.host_back_to_lobby()
+			Router.goto(&"online_lobby")
+		return
 	var again := MatchSetup.new()
 	again.mode = setup.mode
 	again.board_size_override = setup.board_size_override
@@ -216,6 +268,8 @@ func _restart() -> void:
 
 
 func _quit() -> void:
+	if _online:
+		Net.leave_room()
 	AudioManager.play(Sfx.UI_BACK)
 	Router.goto(&"main_menu")
 
@@ -223,3 +277,10 @@ func _quit() -> void:
 func _on_match_ended(ranking: Array) -> void:
 	await get_tree().create_timer(1.2).timeout
 	results_panel.show_results(sim, setup, ranking, board_view)
+	if _online:
+		results_panel.set_rematch_text(tr("ONLINE_BACK_TO_ROOM") if Net.is_host else "", Net.is_host)
+
+
+func _exit_tree() -> void:
+	if Net.return_to_lobby.is_connected(_on_net_return_to_lobby):
+		Net.return_to_lobby.disconnect(_on_net_return_to_lobby)

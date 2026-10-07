@@ -15,13 +15,13 @@ alter table public.profiles enable row level security;
 create policy "profiles are readable by everyone"
   on public.profiles for select using (true);
 create policy "users insert their own profile"
-  on public.profiles for insert with check (auth.uid() = id);
+  on public.profiles for insert with check ((select auth.uid()) = id);
 create policy "users update their own profile"
-  on public.profiles for update using (auth.uid() = id) with check (auth.uid() = id);
+  on public.profiles for update using ((select auth.uid()) = id) with check ((select auth.uid()) = id);
 
 -- Create a profile automatically on sign-up (nickname from the OAuth name).
 create or replace function public.handle_new_user()
-returns trigger language plpgsql security definer set search_path = public as $$
+returns trigger language plpgsql security definer set search_path = '' as $$
 begin
   insert into public.profiles (id, nickname)
   values (
@@ -32,6 +32,8 @@ begin
   return new;
 end;
 $$;
+
+revoke execute on function public.handle_new_user() from public, anon, authenticated;
 
 drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created
@@ -52,13 +54,14 @@ create table if not exists public.scores (
 );
 
 create index if not exists scores_mode_score_idx on public.scores (mode_id, score desc);
+create index if not exists scores_user_idx on public.scores (user_id);
 
 alter table public.scores enable row level security;
 
 create policy "scores are readable by everyone"
   on public.scores for select using (true);
 create policy "users insert their own scores"
-  on public.scores for insert with check (auth.uid() = user_id);
+  on public.scores for insert with check ((select auth.uid()) = user_id);
 
 -- Best score per user and mode, with nickname (what the game reads).
 create or replace view public.leaderboard
@@ -85,9 +88,9 @@ create table if not exists public.player_achievements (
 alter table public.player_achievements enable row level security;
 
 create policy "users read their own achievements"
-  on public.player_achievements for select using (auth.uid() = user_id);
+  on public.player_achievements for select using ((select auth.uid()) = user_id);
 create policy "users unlock their own achievements"
-  on public.player_achievements for insert with check (auth.uid() = user_id);
+  on public.player_achievements for insert with check ((select auth.uid()) = user_id);
 
 -- NOTE: scores are submitted by the client, so they can be faked. Because the
 -- simulation is deterministic, a later step can store the input log + seed

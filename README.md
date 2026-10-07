@@ -58,6 +58,18 @@ Varje bot har en **svårighetsgrad** (hur bra och snabbt den spelar) och en **pe
   Det går också via *Inställningar → Bot trainer (dev)* i debug-läge på desktop. Resultatet sparas i `user://bots/` och används då före de levererade profilerna.
 - **Adaptive-boten** lär sig under spelets gång: varje match provar den en lite muterad variant och behåller den om den presterade bättre (`ai/bot_learning.gd`).
 
+## Online-multiplayer
+
+*Online* i huvudmenyn: skapa ett publikt eller privat rum, dela rumskoden eller gå med i ett publikt rum från listan. Hosten väljer läge, lägger till bottar och startar. Lobbyn och signaleringen går via **Supabase Realtime** och själva spelet peer-to-peer via **WebRTC** (se `docs/ARCHITECTURE.md`).
+
+- I Supabase: *Project Settings → Realtime* ska ha **"Allow public access"** påslaget (standard). Inga tabeller behövs.
+- I editorn/desktop används `addons/webrtc`. I webbläsaren är WebRTC inbyggt.
+- Lokalt test utan internet, i tre terminaler:
+  `godot --headless -s res://tests/mock_realtime_server.gd -- --port 4000`
+  `godot --path . res://tests/online_test.tscn -- --role host --dir /tmp/bp --realtime-url ws://127.0.0.1:4000/socket/websocket --no-stun`
+  samma kommando med `--role client`.
+- Spela mot dig själv: starta två fönster med `--realtime-url` som ovan, eller öppna spelet i två webbläsarflikar.
+
 ## Konton (Supabase)
 
 Inget är uppsatt ännu. Spelet startar och fungerar som gäst. Gör så här när det är dags:

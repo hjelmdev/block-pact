@@ -30,6 +30,7 @@ AudioManager="*res://services/audio_manager.gd"
 Auth="*res://services/auth_service.gd"
 Progress="*res://services/progress_service.gd"
 Router="*res://services/scene_router.gd"
+Net="*res://services/net_service.gd"
 
 [display]
 

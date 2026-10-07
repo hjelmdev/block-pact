@@ -118,7 +118,11 @@ func rest(method: String, path: String, body: Variant = null, with_user := true,
 	http.queue_free()
 	var code: int = result[1]
 	var text: String = (result[3] as PackedByteArray).get_string_from_utf8()
-	var data: Variant = JSON.parse_string(text) if text != "" else null
+	var data: Variant = null
+	if text != "":
+		var json := JSON.new()
+		if json.parse(text) == OK:
+			data = json.data
 	return {"ok": code >= 200 and code < 300, "code": code, "data": data}
 
 

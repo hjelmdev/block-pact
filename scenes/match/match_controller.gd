@@ -10,6 +10,10 @@ extends Node
 signal match_ready(sim: MatchSimulation, setup: MatchSetup)
 signal match_ended(ranking: Array)
 signal countdown_tick(value: int)
+## Online: slots we are waiting for (empty when the game flows again).
+signal net_waiting(slots: Array)
+signal net_desync(tick: int)
+signal net_host_lost()
 
 @export var countdown_seconds: int = 3
 
@@ -23,17 +27,28 @@ var stalled_ticks: int = 0
 var input_log: Array[PackedInt32Array] = []
 var record_inputs: bool = true
 
+## Online play (deterministic lockstep over the Net service).
+var net_mode: bool = false
+var net_delay: int = 4
+var lockstep: NetLockstep
+var _waiting := false
+const HASH_INTERVAL := 120
+
 var _touch_source: TouchInputSource
 var _countdown_left: float = 0.0
 var _last_count: int = -1
 
 
-func start_match(p_setup: MatchSetup) -> void:
+func start_match(p_setup: MatchSetup, p_net_delay: int = -1) -> void:
 	setup = p_setup
+	net_mode = p_net_delay > 0
+	net_delay = p_net_delay
 	if setup.seed == 0:
 		setup.seed = randi()
 	sim = MatchSimulation.new(setup)
 	_create_sources()
+	if net_mode:
+		_setup_lockstep()
 	sim.match_finished.connect(_on_match_finished)
 	get_tree().call_group(&"match_presenter", &"bind_match", sim, setup, self)
 	match_ready.emit(sim, setup)
@@ -73,9 +88,8 @@ func _create_sources() -> void:
 					profile = personality.apply_to(profile)
 				src = BotInputSource.new(profile)
 			PlayerSlot.Kind.REMOTE:
-				# Placeholder until online play exists: a remote seat idles.
-				var remote := ScriptedInputSource.new()
-				src = remote
+				# Fed by the network (NetLockstep); never gathered directly.
+				src = InputSource.new()
 			_:
 				src = ControlSchemes.create_source(slot.input_device)
 				if src is TouchInputSource and _touch_source == null:
@@ -92,6 +106,48 @@ func _create_sources() -> void:
 				_touch_source = combo.sources[1] as TouchInputSource
 				sources[i] = combo
 				break
+
+
+func _setup_lockstep() -> void:
+	var local: Array[int] = []
+	for i in setup.slots.size():
+		if setup.slots[i].kind != PlayerSlot.Kind.REMOTE:
+			local.append(i)
+	lockstep = NetLockstep.new(sim, sources, local, net_delay)
+	lockstep.send_inputs.connect(Net.send_inputs)
+	Net.inputs_received.connect(lockstep.receive)
+	Net.peer_dropped.connect(_on_net_peer_dropped)
+	Net.desync_detected.connect(_on_net_desync)
+	Net.host_lost.connect(_on_net_host_lost)
+
+
+func _on_net_desync(tick: int) -> void:
+	net_desync.emit(tick)
+
+
+func _on_net_host_lost() -> void:
+	net_host_lost.emit()
+
+
+func _on_net_peer_dropped(peer_id: int) -> void:
+	if not Net.is_host:
+		return
+	for i in setup.slots.size():
+		if setup.slots[i].kind == PlayerSlot.Kind.REMOTE and setup.slots[i].peer_id == peer_id:
+			lockstep.take_over(i)
+
+
+func _net_step() -> void:
+	var steps := lockstep.update()
+	if steps > 0:
+		if _waiting:
+			_waiting = false
+			net_waiting.emit([])
+		if sim.tick_count % HASH_INTERVAL == 0:
+			Net.send_hash(sim.tick_count, NetProtocol.state_hash(sim))
+	elif lockstep.stalled_frames % 30 == 29 and not sim.finished:
+		_waiting = true
+		net_waiting.emit(lockstep.missing_slots())
 
 
 func _begin() -> void:
@@ -114,6 +170,9 @@ func _physics_process(delta: float) -> void:
 			_begin()
 		return
 	if sim.finished:
+		return
+	if net_mode:
+		_net_step()
 		return
 	var inputs := PackedInt32Array()
 	inputs.resize(sources.size())
@@ -147,3 +206,9 @@ func _report_bot_learning() -> void:
 func _exit_tree() -> void:
 	for s in sources:
 		s.dispose()
+	if lockstep:
+		if Net.inputs_received.is_connected(lockstep.receive):
+			Net.inputs_received.disconnect(lockstep.receive)
+		for pair in [[Net.peer_dropped, _on_net_peer_dropped], [Net.desync_detected, _on_net_desync], [Net.host_lost, _on_net_host_lost]]:
+			if pair[0].is_connected(pair[1]):
+				pair[0].disconnect(pair[1])

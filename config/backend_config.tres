@@ -1,7 +1,9 @@
 [gd_resource type="Resource" script_class="BackendConfig" format=3]
 
-[ext_resource type="Script" path="res://config/backend_config.gd" id="1_q2o4t"]
+[ext_resource type="Script" path="res://config/backend_config.gd" id="1"]
 
 [resource]
-script = ExtResource("1_q2o4t")
-oauth_providers = PackedStringArray("google", "discord")
+script = ExtResource("1")
+supabase_url = "https://ihlyzdsrogwwqmopmxib.supabase.co"
+supabase_anon_key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlobHl6ZHNyb2d3d3Ftb3BteGliIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEzOTI3NTQsImV4cCI6MjEwNjk2ODc1NH0.NY1OD0l9fOhLwa6imvv4lu6zRTq3C2cW5JGuverc7Rc"
+oauth_providers = PackedStringArray()

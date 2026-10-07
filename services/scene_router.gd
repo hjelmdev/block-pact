@@ -13,6 +13,7 @@ const SCENES := {
 	&"account": "res://scenes/menus/account_menu.tscn",
 	&"leaderboard": "res://scenes/menus/leaderboard_menu.tscn",
 	&"online": "res://scenes/menus/online_menu.tscn",
+	&"online_lobby": "res://scenes/menus/online_lobby.tscn",
 	&"bot_trainer": "res://tools/bot_trainer.tscn",
 }
 

@@ -32,7 +32,7 @@ MENU_TAGLINE,We need each other to survive – but I'm still going to win.,Vi be
 MENU_SOLO,Solo,Solo
 MENU_VS_BOTS,Play vs bots,Spela mot bottar
 MENU_LOCAL,Local multiplayer,Lokal multiplayer
-MENU_ONLINE,Online (coming soon),Online (kommer snart)
+MENU_ONLINE,Online,Online
 MENU_LEADERBOARD,Leaderboard,Topplista
 MENU_ACCOUNT,Account,Konto
 MENU_SETTINGS,Settings,Inställningar
@@ -43,8 +43,6 @@ MVP_BUILDER,Top builder,Bästa byggare
 MVP_COMBO,Combo king,Combokung
 MVP_FINISHER,Finisher,Avslutare
 MVP_SPECIAL,Multiplier master,Multiplikatormästare
-ONLINE_TITLE,Online,Online
-ONLINE_COMING_SOON,"Online multiplayer is on its way. The game is already built for it – for now, try a match against bots.",Online-multiplayer är på väg. Spelet är redan byggt för det – prova en match mot bottar så länge.
 PAUSE_TITLE,Paused,Pausat
 PAUSE_RESUME,Resume,Fortsätt
 PAUSE_RESTART,Restart,Starta om
@@ -87,3 +85,33 @@ PERSONALITY_GREEDY,Greedy,Girig
 PERSONALITY_GREEDY_DESC,Builds its own rows and saves x5 blocks for them.,Bygger egna rader och sparar x5-block till dem.
 PERSONALITY_SABOTEUR,Saboteur,Sabotör
 PERSONALITY_SABOTEUR_DESC,Covers the gaps in your nearly finished rows.,Täcker luckorna i dina nästan klara rader.
+ONLINE_ALREADY_STARTED,The match has already started.,Matchen har redan startat.
+ONLINE_BACK_TO_ROOM,Back to room,Tillbaka till rummet
+ONLINE_CODE,Room code,Rumskod
+ONLINE_CONNECTED,Connected!,Ansluten!
+ONLINE_CONNECTING,Connecting…,Ansluter…
+ONLINE_CREATE_PRIVATE,Private room,Privat rum
+ONLINE_CREATE_PUBLIC,Public room,Publikt rum
+ONLINE_DESYNC,Out of sync at tick %d,Ur synk vid tick %d
+ONLINE_DISCONNECTED,Connection lost (%s),Anslutningen bröts (%s)
+ONLINE_ENTER_CODE,Enter a room code.,Skriv en rumskod.
+ONLINE_HELP,"Create a room and share the code, or join a public room. Games run peer-to-peer with the host.","Skapa ett rum och dela koden, eller gå med i ett publikt rum. Spelet går peer-to-peer med hosten."
+ONLINE_HOST_HINT,"Share the code or add bots, then start.",Dela koden eller lägg till bottar och starta.
+ONLINE_HOST_LEFT,The host left the game.,Hosten lämnade spelet.
+ONLINE_JOIN,Join,Gå med
+ONLINE_JOINING,Joining room %s…,Går med i rum %s…
+ONLINE_NOT_CONFIGURED,Online play is not configured.,Onlinespel är inte konfigurerat.
+ONLINE_NO_ROOMS,No public rooms right now.,Inga publika rum just nu.
+ONLINE_NO_WEBRTC,WebRTC is not available in this build.,WebRTC finns inte i den här versionen.
+ONLINE_PLAYER_LEFT,A player left.,En spelare lämnade.
+ONLINE_PUBLIC_ROOMS,Public rooms,Publika rum
+ONLINE_ROOM,Room %s,Rum %s
+ONLINE_ROOM_FULL,The room is full.,Rummet är fullt.
+ONLINE_ROOM_NOT_FOUND,Room %s not found.,Hittade inte rum %s.
+ONLINE_SHARE_CODE,Share the room code with your friends.,Dela rumskoden med dina vänner.
+ONLINE_TAG_HOST,Host,Host
+ONLINE_TAG_YOU,you,du
+ONLINE_TITLE,Online,Online
+ONLINE_VERSION_MISMATCH,Different game version – reload the page.,Olika spelversioner – ladda om sidan.
+ONLINE_WAITING_FOR,Waiting for %s…,Väntar på %s…
+ONLINE_WAITING_HOST,Waiting for the host…,Väntar på hosten…

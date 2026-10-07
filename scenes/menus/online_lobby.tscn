@@ -1,9 +1,9 @@
 [gd_scene load_steps=3 format=3]
 
-[ext_resource type="Script" path="res://scenes/menus/online_menu.gd" id="1"]
+[ext_resource type="Script" path="res://scenes/menus/online_lobby.gd" id="1"]
 [ext_resource type="PackedScene" path="res://scenes/menus/menu_background.tscn" id="2"]
 
-[node name="OnlineMenu" type="Control"]
+[node name="OnlineLobby" type="Control"]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
