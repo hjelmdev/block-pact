@@ -108,7 +108,11 @@ func _apply_layout(portrait: bool) -> void:
 	board_view.vertical_align = 1.0 if portrait else 0.5
 	compact_row.visible = portrait
 	left_col.visible = not portrait
-	right_col.visible = not portrait and n > 1
+	# Keep both side columns (even if one is empty) so the board stays
+	# centered on screen in solo / odd player counts.
+	right_col.visible = not portrait
+	right_col.custom_minimum_size.x = 160.0 if not portrait else 0.0
+	left_col.custom_minimum_size.x = 160.0 if not portrait else 0.0
 	touch_controls.custom_minimum_size.y = 190.0 if portrait else 140.0
 
 
@@ -155,6 +159,10 @@ func _on_countdown(value: int) -> void:
 		AudioManager.play(Sfx.GO)
 	countdown_label.show()
 	countdown_label.modulate.a = 1.0
+	# Center over the board, not the window.
+	var board_center := board_view.board_origin + board_view.board_pixel_size() * 0.5
+	var local := get_global_transform().affine_inverse() * (board_view.get_global_transform() * board_center)
+	countdown_label.position = local - countdown_label.size * 0.5
 	countdown_label.pivot_offset = countdown_label.size * 0.5
 	countdown_label.scale = Vector2.ONE * 1.4
 	var t := create_tween()
