@@ -44,21 +44,13 @@ window/handheld/orientation=6
 [gui]
 
 common/drop_mouse_on_gui_input_disabled=true
-theme/default_theme_scale=1.0
-
-[input_devices]
-
-pointing/emulate_mouse_from_touch=true
 
 [internationalization]
 
 locale/translations=PackedStringArray("res://localization/strings.en.translation", "res://localization/strings.sv.translation")
-locale/fallback="en"
 
 [physics]
 
-common/physics_ticks_per_second=60
-common/max_physics_steps_per_frame=8
 3d/physics_engine="Jolt Physics"
 
 [rendering]
