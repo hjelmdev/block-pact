@@ -17,6 +17,7 @@ func _init() -> void:
 	_test_lockstep_two_peers()
 	_test_special_effects()
 	_test_powerups()
+	_test_knockout()
 	print("\n%d passed, %d failed" % [_passes, _failures])
 	quit(1 if _failures > 0 else 0)
 
@@ -392,3 +393,33 @@ func _run_fx(setup: MatchSetup, ticks: int) -> String:
 	for p in sim.players:
 		scores.append([p.score, p.blocks_destroyed, p.powerups_used])
 	return str([sim.tick_count, sim.total_lines, scores, hash(sim.board.owners)])
+
+
+func _test_knockout() -> void:
+	var setup := _make_setup(3, 5, "res://data/modes/knockout.tres")
+	var sim := MatchSimulation.new(setup)
+	sim.start()
+	var b := sim.board
+	_check(sim.players[0].lives == 3, "knockout starts with 3 lives")
+	for x in b.width:
+		b.set_cell(x, b.height - 1, 0 if x % 2 == 0 else 1)
+	sim._top_out(sim.players[0])
+	var p0_cells := 0
+	for x in b.width:
+		if b.get_owner(x, b.height - 1) == 0:
+			p0_cells += 1
+	_check(sim.players[0].lives == 2 and p0_cells == 0 and not sim.finished, "losing a life removes your blocks")
+	sim._top_out(sim.players[0])
+	sim._top_out(sim.players[0])
+	_check(not sim.players[0].alive and not sim.finished, "out of lives = eliminated, match goes on")
+	for i in 3:
+		sim._top_out(sim.players[1])
+	_check(sim.finished and sim.ranking[0].player_id == 2 and sim.ranking[2].player_id == 0, "last one standing wins")
+	# Survivors keep playing: run a few hundred ticks with bots-like random input.
+	var s2 := MatchSimulation.new(_make_setup(2, 9, "res://data/modes/knockout.tres"))
+	s2.start()
+	for t in 6000:
+		s2.step(PackedInt32Array([InputCommand.HARD_DROP if t % 7 == 0 else 0, InputCommand.HARD_DROP if t % 5 == 0 else 0]))
+		if s2.finished:
+			break
+	_check(s2.finished and s2.ranking.size() == 2, "knockout match ends by elimination")

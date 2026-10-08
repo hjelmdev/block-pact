@@ -82,6 +82,7 @@ func _on_match_ready(p_sim: MatchSimulation, p_setup: MatchSetup) -> void:
 		panels[i] = panel
 	if n > 1 and setup.mode.team_mode != GameModeConfig.TeamMode.COOP:
 		sim.score_changed.connect(func(_p, _s, _d): _update_ranks())
+		sim.board_effect.connect(func(e): if e.key == &"knockout": _update_ranks())
 	_apply_layout(Platform.is_portrait())
 
 
@@ -92,11 +93,12 @@ func _update_ranks() -> void:
 		var p: PlayerState = order[i]
 		var rank := 1
 		for q: PlayerState in order:
-			if q.score > p.score:
+			# Knocked-out players always rank below everyone still in.
+			if (q.alive and not p.alive) or (q.alive == p.alive and q.score > p.score):
 				rank += 1
 		var panel: PlayerPanel = panels.get(p.id)
 		if panel:
-			panel.set_rank(rank, rank == 1 and p.score > 0 and (order.size() < 2 or order[1].score < p.score))
+			panel.set_rank(rank, rank == 1 and p.alive and p.score > 0 and (order.size() < 2 or order[1].score < p.score or not order[1].alive))
 
 
 func _apply_layout(portrait: bool) -> void:

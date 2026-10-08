@@ -101,6 +101,7 @@ func _init(p_setup: MatchSetup) -> void:
 		var slot := p_setup.slots[i]
 		var p := PlayerState.new()
 		p.id = i
+		p.lives = _win.starting_lives()
 		p.display_name = slot.display_name
 		p.team = slot.team if slot.team >= 0 else config.team_for_slot(i, n)
 		var bag_seed := hash([p_setup.seed, "bag"]) if config.shared_sequence else hash([p_setup.seed, "bag", i])
@@ -770,6 +771,25 @@ func _quake(p: PlayerState) -> void:
 	board_changed.emit()
 
 
+## Knockout: removes every locked block owned by `p` and drops the player's
+## held powerup. Called by KnockoutWinCondition.
+func knock_out(p: PlayerState) -> void:
+	var removed: Array[Vector2i] = []
+	for y in board.height:
+		for x in board.width:
+			if board.get_owner(x, y) == p.id:
+				board.clear_cell(x, y)
+				removed.append(Vector2i(x, y))
+	board_version += 1
+	if p.powerup > 0:
+		p.powerup = 0
+		powerup_changed.emit(p.id, 0)
+	board_effect.emit({"key": &"knockout", "owner": p.id, "player": p.id,
+			"origin": Vector2i(p.spawn_column, board.hidden_rows), "cells": removed, "amount": p.lives})
+	_resolve_active_overlaps()
+	board_changed.emit()
+
+
 ## After rows collapse, locked blocks may move into a falling piece – push it up.
 func _resolve_active_overlaps() -> void:
 	for p in players:
@@ -790,6 +810,7 @@ func _add_score(p: PlayerState, delta: int) -> void:
 
 func _top_out(p: PlayerState) -> void:
 	p.active = null
+	p.bomb_armed = false
 	player_topped_out.emit(p.id)
 	if _win.on_top_out(self, p):
 		_finish()

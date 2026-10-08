@@ -9,6 +9,8 @@ const MODES := {
 	&"shared_competition": "res://data/modes/shared_competition.tres",
 	&"pure_coop": "res://data/modes/pure_coop.tres",
 	&"team_battle": "res://data/modes/team_battle.tres",
+	&"knockout": "res://data/modes/knockout.tres",
+	&"mayhem": "res://data/modes/mayhem.tres",
 }
 
 

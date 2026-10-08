@@ -46,6 +46,11 @@ func _competitive() -> bool:
 func _on_lines_cleared(result: LineClearResult) -> void:
 	if board_view == null:
 		return
+	# Co-op milestones: celebrate the team every 20 lines.
+	if setup.mode.team_mode == GameModeConfig.TeamMode.COOP and sim.players.size() > 1:
+		var before := sim.total_lines - result.line_count()
+		if before / 20 != sim.total_lines / 20:
+			_show_banner(tr("CALLOUT_TEAM_MILESTONE") % (sim.total_lines / 20 * 20), Color(0.6, 1.0, 0.7))
 	var finisher := result.finisher_id
 	var fcol := board_view.player_color(finisher)
 	var b := sim.board
@@ -108,6 +113,12 @@ func _on_board_effect(e: Dictionary) -> void:
 						board_view.player_color(e.player).lightened(0.4), 1.3)
 		"quake":
 			_show_banner(tr("CALLOUT_QUAKE"), Color(1, 0.75, 0.4))
+		"knockout":
+			var kp := sim.get_player(e.owner)
+			if e.amount <= 0:
+				_show_banner(tr("CALLOUT_ELIMINATED") % kp.display_name, col)
+			else:
+				_show_banner(tr("CALLOUT_LIFE_LOST") % [kp.display_name, e.amount], col)
 
 
 func _on_powerup_used(pid: int, powerup_id: int) -> void:

@@ -6,6 +6,11 @@ var id: int = 0
 var team: int = 0
 var display_name: String = ""
 var alive: bool = true
+## Knockout lives left (-1 = mode without lives).
+var lives: int = -1
+var eliminated_tick: int = -1
+## 1 = first player knocked out, 2 = second … (0 = still in).
+var eliminated_order: int = 0
 
 var score: int = 0
 var combo: int = 0

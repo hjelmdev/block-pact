@@ -24,8 +24,29 @@ func _detach() -> void:
 	get_tree().current_scene = dummy
 	if OS.get_cmdline_user_args().has("--fx"):
 		_run_fx()
+	elif OS.get_cmdline_user_args().has("--knockout"):
+		_run_knockout()
 	else:
 		_run()
+
+
+func _run_knockout() -> void:
+	get_window().size = Vector2i(1280, 720)
+	var setup := MatchFactory.vs_bots(3, &"normal")
+	setup.mode = MatchFactory.load_mode(&"knockout")
+	Router.goto(&"match", {"setup": setup})
+	await _wait(8.0)
+	var sim: MatchSimulation = get_tree().current_scene.controller.sim
+	sim._top_out(sim.players[1])
+	await _wait(0.3)
+	await _shot("ko_1_life_lost")
+	sim._top_out(sim.players[2])
+	sim._top_out(sim.players[2])
+	sim._top_out(sim.players[2])
+	await _wait(0.5)
+	await _shot("ko_2_eliminated")
+	print("visual test done")
+	get_tree().quit()
 
 
 ## Special blocks + powerups: 4 hard bots with boosted chances.

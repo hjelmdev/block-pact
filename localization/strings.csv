@@ -153,3 +153,7 @@ ACCOUNT_ACHIEVEMENTS,Achievements,Achievements
 ACCOUNT_ACHIEVEMENTS_GUEST,Sign in to unlock and keep achievements.,Logga in för att låsa upp och spara achievements.
 HUD_YOU,YOU,DU
 SETTINGS_PIECE_TAGS,Names on falling pieces,Namn på fallande klossar
+HUD_OUT,OUT,UTE
+CALLOUT_LIFE_LOST,%s loses a life! (%d left),%s förlorar ett liv! (%d kvar)
+CALLOUT_ELIMINATED,%s is OUT!,%s är UTE!
+CALLOUT_TEAM_MILESTONE,TEAM: %d LINES!,LAGET: %d RADER!

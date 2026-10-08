@@ -16,6 +16,11 @@ enum RankBy { PLAYER_SCORE, TEAM_SCORE, SHARED_SCORE }
 @export var rank_by: RankBy = RankBy.PLAYER_SCORE
 
 
+## Lives per player at match start (-1 = no lives, Knockout overrides).
+func starting_lives() -> int:
+	return -1
+
+
 ## Called when a player's piece can no longer spawn / locks out.
 ## Return true if the whole match should end.
 func on_top_out(sim: MatchSimulation, player: PlayerState) -> bool:

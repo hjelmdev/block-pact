@@ -56,11 +56,33 @@ func setup_panel(p_sim: MatchSimulation, p_player_id: int, color: Color, show_pr
 	sim.piece_held.connect(_on_piece_changed)
 	_refresh_previews()
 	_update_info(0)
+	if p.lives >= 0:
+		sim.board_effect.connect(func(e):
+			if e.key == &"knockout" and e.owner == player_id:
+				_update_lives())
+		_update_lives()
 	if sim.powerups_enabled():
 		_build_power_row()
 		sim.powerup_changed.connect(func(pid, _id):
 			if pid == player_id:
 				_flash_power())
+
+
+func _update_lives() -> void:
+	var p := sim.get_player(player_id)
+	_team.visible = true
+	if not p.alive:
+		_team.text = tr("HUD_OUT")
+		_team.add_theme_color_override(&"font_color", Color(1, 0.4, 0.35))
+		modulate = Color(1, 1, 1, 0.45)
+		return
+	var start := maxi(sim._win.starting_lives(), p.lives)
+	_team.text = "♥".repeat(p.lives) + "♡".repeat(maxi(start - p.lives, 0))
+	_team.add_theme_color_override(&"font_color", Color(1, 0.4, 0.45))
+	var t := create_tween()
+	_team.pivot_offset = _team.size * 0.5
+	t.tween_property(_team, "scale", Vector2.ONE * 1.5, 0.08)
+	t.tween_property(_team, "scale", Vector2.ONE, 0.25)
 
 
 func _build_power_row() -> void:
