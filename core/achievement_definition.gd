@@ -12,6 +12,9 @@ enum Stat {
 	SPECIALS,         ## special cells of yours that were cleared
 	WON_MULTIPLAYER,  ## 1 if ranked first in a match with 2+ players
 	PIECES_PLACED,
+	BLOCKS_DESTROYED, ## blocks destroyed by your bombs / lasers in one match
+	BLOCKS_PAINTED,   ## blocks repainted in your color in one match
+	POWERUPS_USED,
 }
 
 @export var id: StringName = &""

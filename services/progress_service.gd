@@ -5,6 +5,8 @@ extends Node
 
 signal achievement_unlocked(def: AchievementDefinition)
 signal profile_changed()
+## After a score was posted: a short note for the results screen.
+signal score_saved(note: String)
 
 const ACHIEVEMENT_DIR := "res://data/achievements/"
 
@@ -66,7 +68,15 @@ func submit_match(sim: MatchSimulation, setup: MatchSetup, ranking: Array) -> St
 	_check_achievements(stats, setup.mode.mode_id)
 	if setup.mode.leaderboard_enabled:
 		_post_score(setup, sim, p)
+		return tr("RESULTS_SAVING")
 	return tr("RESULTS_SAVED")
+
+
+## "classic" or "party" (special blocks / powerups) – separate leaderboards.
+static func ruleset_for(sim: MatchSimulation) -> String:
+	if sim.powerups_enabled() or sim.config.special_preset == "all":
+		return "party"
+	return "classic"
 
 
 func stats_for(sim: MatchSimulation, p: PlayerState, ranking: Array) -> Dictionary:
@@ -82,27 +92,53 @@ func stats_for(sim: MatchSimulation, p: PlayerState, ranking: Array) -> Dictiona
 		AchievementDefinition.Stat.SPECIALS: p.specials_triggered,
 		AchievementDefinition.Stat.WON_MULTIPLAYER: won,
 		AchievementDefinition.Stat.PIECES_PLACED: p.pieces_placed,
+		AchievementDefinition.Stat.BLOCKS_DESTROYED: p.blocks_destroyed,
+		AchievementDefinition.Stat.BLOCKS_PAINTED: p.blocks_painted,
+		AchievementDefinition.Stat.POWERUPS_USED: p.powerups_used,
 	}
 
 
-## Returns Array of {nickname, score, lines, created_at}. Empty when offline.
-func fetch_leaderboard(mode_id: StringName, limit := 20) -> Array:
+## Returns Array of {user_id, nickname, avatar, score, lines, created_at}.
+## Readable by guests too; empty when offline.
+func fetch_leaderboard(mode_id: StringName, ruleset := "classic", limit := 20) -> Array:
 	if not Auth.is_available():
 		return []
-	var path := "/rest/v1/leaderboard?mode_id=eq.%s&order=score.desc&limit=%d" % [mode_id, limit]
+	var path := "/rest/v1/leaderboard?mode_id=eq.%s&ruleset=eq.%s&order=score.desc&limit=%d" % [
+			String(mode_id).uri_encode(), ruleset.uri_encode(), limit]
 	var res: Dictionary = await Auth.rest("GET", path, null, false)
 	return res.data if res.ok and res.data is Array else []
 
 
+## Best score of the signed-in player for a mode/ruleset (0 = none).
+func fetch_personal_best(mode_id: StringName, ruleset: String) -> int:
+	if not is_tracking():
+		return 0
+	var path := "/rest/v1/scores?select=score&user_id=eq.%s&mode_id=eq.%s&ruleset=eq.%s&order=score.desc&limit=1" % [
+			Auth.user_id, String(mode_id).uri_encode(), ruleset.uri_encode()]
+	var res: Dictionary = await Auth.rest("GET", path, null)
+	if res.ok and res.data is Array and not res.data.is_empty():
+		return int(res.data[0].get("score", 0))
+	return 0
+
+
 func _post_score(setup: MatchSetup, sim: MatchSimulation, p: PlayerState) -> void:
-	Auth.rest("POST", "/rest/v1/scores", {
+	var ruleset := ruleset_for(sim)
+	var previous_best := await fetch_personal_best(setup.mode.mode_id, ruleset)
+	var res: Dictionary = await Auth.rest("POST", "/rest/v1/scores", {
 		"mode_id": String(setup.mode.mode_id),
+		"ruleset": ruleset,
 		"score": p.score,
 		"lines": p.lines_finished,
 		"players": setup.slots.size(),
 		"duration_s": sim.tick_count / MatchSimulation.TICKS_PER_SECOND,
 		"seed": setup.seed,
 	})
+	if not res.ok:
+		score_saved.emit(tr("RESULTS_SAVE_FAILED"))
+	elif p.score > previous_best:
+		score_saved.emit(tr("RESULTS_NEW_BEST") % p.score)
+	else:
+		score_saved.emit(tr("RESULTS_SAVED_BEST") % previous_best)
 
 
 func _check_achievements(stats: Dictionary, mode_id: StringName) -> void:

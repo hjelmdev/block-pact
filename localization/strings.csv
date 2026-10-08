@@ -137,3 +137,17 @@ LOBBY_SPECIALS_MODE,Mode default,Lägets standard
 LOBBY_SPECIALS_ALL,All (bombs/laser/paint/gold),Alla (bomb/laser/färg/guld)
 LOBBY_SPECIALS_OFF,Off,Av
 LOBBY_POWERUPS,Powerups,Powerups
+RESULTS_SAVING,Saving your result…,Sparar ditt resultat…
+RESULTS_SAVE_FAILED,Could not save the result (offline?).,Kunde inte spara resultatet (offline?).
+RESULTS_NEW_BEST,New personal best: %d!,Nytt personbästa: %d!
+RESULTS_SAVED_BEST,Result saved. Your best: %d,Resultatet sparat. Ditt bästa: %d
+MVP_DESTROYER,Demolisher,Rivare
+MVP_PAINTER,Painter,Målare
+LEADERBOARD_RULESET,Rules,Regler
+LEADERBOARD_CLASSIC,Classic,Klassiskt
+LEADERBOARD_PARTY,Party (specials + powerups),Party (specialblock + powerups)
+LEADERBOARD_YOUR_BEST,Your best: %d,Ditt bästa: %d
+LEADERBOARD_GUEST_HINT,Sign in to get on the leaderboard.,Logga in för att komma med på topplistan.
+LEADERBOARD_YOU,you,du
+ACCOUNT_ACHIEVEMENTS,Achievements,Achievements
+ACCOUNT_ACHIEVEMENTS_GUEST,Sign in to unlock and keep achievements.,Logga in för att låsa upp och spara achievements.

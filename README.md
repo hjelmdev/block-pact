@@ -78,12 +78,12 @@ Varje bot har en **svårighetsgrad** (hur bra och snabbt den spelar) och en **pe
 
 Inget är uppsatt ännu. Spelet startar och fungerar som gäst. Gör så här när det är dags:
 
-1. Skapa ett Supabase-projekt och kör `supabase/migrations/0001_block_pact_init.sql` i SQL-editorn.
+1. Skapa ett Supabase-projekt och kör migrationerna i `supabase/migrations/` i nummerordning i SQL-editorn.
 2. *Authentication → Providers*: aktivera **Google** och **Discord** (client id/secret från respektive utvecklarportal).
 3. *Authentication → URL Configuration*: lägg in webbadressen där spelet hostas och `http://localhost:43117/` (för inloggning från editorn/desktop) under Redirect URLs.
 4. Skapa `config/backend_config.local.tres` (git-ignorerad, typ `BackendConfig`) eller fyll i `config/backend_config.tres`: `supabase_url` och `supabase_anon_key` (den publika nyckeln).
 
-Gäster kan spela allt, men highscore, achievements och nickname-profil sparas bara för inloggade.
+Gäster kan spela allt och se topplistan, men highscore, achievements och nickname-profil sparas bara för inloggade. Topplistan delas upp per läge och regler: *Klassiskt* och *Party* (specialblock eller powerups påslagna).
 
 ## Tester
 

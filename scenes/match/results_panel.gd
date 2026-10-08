@@ -76,11 +76,19 @@ func show_results(sim: MatchSimulation, setup: MatchSetup, ranking: Array, view:
 		_rows.add_child(block)
 
 	# Saving progress (accounts only)
+	if not Progress.score_saved.is_connected(_on_score_saved):
+		Progress.score_saved.connect(_on_score_saved)
 	var result := Progress.submit_match(sim, setup, ranking)
 	_note.text = result
 	_note.visible = result != ""
 	show()
 	_rematch.grab_focus()
+
+
+func _on_score_saved(note: String) -> void:
+	if is_visible_in_tree():
+		_note.text = note
+		_note.visible = true
 
 
 func _mvp_awards(sim: MatchSimulation) -> Dictionary:
@@ -92,6 +100,8 @@ func _mvp_awards(sim: MatchSimulation) -> Dictionary:
 		"MVP_BUILDER": func(p: PlayerState): return p.cells_cleared,
 		"MVP_COMBO": func(p: PlayerState): return p.max_combo,
 		"MVP_SPECIAL": func(p: PlayerState): return p.specials_triggered,
+		"MVP_DESTROYER": func(p: PlayerState): return p.blocks_destroyed,
+		"MVP_PAINTER": func(p: PlayerState): return p.blocks_painted,
 	}
 	for key: String in cats:
 		var best: PlayerState = null
