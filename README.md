@@ -18,9 +18,22 @@ Godot 4.7, GL Compatibility, byggt för webbläsare (desktop och mobil).
 | Hårt fall | Mellanslag | W | ↑ | D-pad upp |
 | Rotera | ↑ X W / Z Ctrl Q | E / Q | . / , | A / B |
 | Hold | C Shift E | Shift | - | LB/RB |
+| Powerup | V F Enter | R | Enter | Y |
 | Paus | Esc / P | | | Start |
 
-På mobil visas pekkontroller automatiskt och har multitouch, så att du kan hålla en riktning och rotera samtidigt.
+På mobil och surfplatta styr du med **svep** (standard):
+
+| Gest | Gör |
+|---|---|
+| Dra åt sidan | Klossen följer fingret, en kolumn per ruta (aldrig snabbare än tangentbordets auto-repeat) |
+| Dra nedåt och håll | Mjukt fall |
+| Snabbt svep uppåt | Hårt drop |
+| Tryck | Rotera medurs |
+| Tryck med två fingrar | Rotera moturs |
+| Håll stilla | Hold (spara klossen) |
+| Blixtknappen | Använd powerup |
+
+Under *Inställningar → Touchstil* kan du byta till knappar på skärmen, och justera svepavståndet per kolumn.
 
 ## Webb-export
 

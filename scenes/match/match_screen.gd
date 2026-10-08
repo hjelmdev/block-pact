@@ -14,6 +14,7 @@ const PANEL_SCENE := preload("res://presentation/hud/player_panel.tscn")
 @onready var right_col: VBoxContainer = %RightPanels
 @onready var compact_row: HFlowContainer = %CompactPanels
 @onready var touch_controls: TouchControls = %TouchControls
+var gestures: GestureControls
 @onready var mode_label: Label = %ModeLabel
 @onready var level_label: Label = %LevelLabel
 @onready var lines_label: Label = %LinesLabel
@@ -42,6 +43,11 @@ func _ready() -> void:
 	effect.anchor_provider = _score_anchor
 	effect.score_arrived.connect(_on_score_arrived)
 	callouts.board_view = board_view
+	gestures = GestureControls.new()
+	gestures.board_view = board_view
+	gestures.exclude_rects.append(func(): return pause_button.get_global_rect().grow(10))
+	add_child(gestures)
+	move_child(gestures, pause_menu.get_index())
 	Platform.layout_changed.connect(_apply_layout)
 	pause_button.pressed.connect(_pause)
 	pause_button.icon = Assets.icon(&"pause")
@@ -125,6 +131,14 @@ func _apply_layout(portrait: bool) -> void:
 	right_col.custom_minimum_size.x = 160.0 if not portrait else 0.0
 	left_col.custom_minimum_size.x = 160.0 if not portrait else 0.0
 	touch_controls.custom_minimum_size.y = 190.0 if portrait else 140.0
+	var bottom := 4
+	if GestureControls.scheme_active():
+		# Swipe controls: the board gets the space the buttons would take,
+		# minus a thumb strip at the bottom for the power button.
+		touch_controls.custom_minimum_size.y = 0.0
+		if portrait and sim and sim.powerups_enabled():
+			bottom = 84
+	$Layout.add_theme_constant_override(&"margin_bottom", bottom)
 
 
 func _score_anchor(player_id: int) -> Vector2:

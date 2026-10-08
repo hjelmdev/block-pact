@@ -157,3 +157,8 @@ HUD_OUT,OUT,UTE
 CALLOUT_LIFE_LOST,%s loses a life! (%d left),%s förlorar ett liv! (%d kvar)
 CALLOUT_ELIMINATED,%s is OUT!,%s är UTE!
 CALLOUT_TEAM_MILESTONE,TEAM: %d LINES!,LAGET: %d RADER!
+SETTINGS_TOUCH_SCHEME,Touch style,Touchstil
+SETTINGS_TOUCH_SCHEME_GESTURES,Swipe (gestures),Svep (gester)
+SETTINGS_TOUCH_SCHEME_BUTTONS,On-screen buttons,Knappar på skärmen
+SETTINGS_SWIPE_SENS,Swipe distance per column,Svepavstånd per kolumn
+GESTURE_HINT,"Swipe ←→ move · Drag ↓ soft drop · Flick ↑ drop · Tap rotate · 2 fingers rotate back · Hold = hold piece","Svep ←→ flytta · Dra ↓ mjukt fall · Svep ↑ släpp · Tryck rotera · 2 fingrar rotera bakåt · Håll = spara kloss"

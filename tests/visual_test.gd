@@ -26,8 +26,97 @@ func _detach() -> void:
 		_run_fx()
 	elif OS.get_cmdline_user_args().has("--knockout"):
 		_run_knockout()
+	elif OS.get_cmdline_user_args().has("--gestures"):
+		_run_gestures()
 	else:
 		_run()
+
+
+func _touch(index: int, pos: Vector2, pressed: bool) -> void:
+	var e := InputEventScreenTouch.new()
+	e.index = index
+	e.position = pos
+	e.pressed = pressed
+	Input.parse_input_event(e)
+
+
+func _drag(index: int, from: Vector2, to: Vector2, steps: int, seconds: float) -> void:
+	var prev := from
+	for i in steps:
+		var p := from.lerp(to, float(i + 1) / steps)
+		var e := InputEventScreenDrag.new()
+		e.index = index
+		e.position = p
+		e.relative = p - prev
+		e.velocity = (p - prev) / (seconds / steps)
+		Input.parse_input_event(e)
+		prev = p
+		await get_tree().create_timer(seconds / steps, true, false, true).timeout
+
+
+func _run_gestures() -> void:
+	GameSettings.set_value("controls", "touch_controls", "on")
+	GameSettings.set_value("controls", "touch_scheme", "gestures")
+	GameSettings.set_value("controls", "gesture_hint_shown", 0)
+	var win := get_window()
+	win.size = Vector2i(390, 844)
+	var setup := MatchFactory.quick_solo()
+	setup.rule_overrides = {"powerups_enabled": true}
+	Router.goto(&"match", {"setup": setup})
+	await _wait(4.5)
+	var screen = get_tree().current_scene
+	var sim: MatchSimulation = screen.controller.sim
+	var p := sim.get_player(0)
+	await _shot("g_0_start")
+	var cell: float = screen.gestures._cell_px()
+	var c := Vector2(195, 500)
+	# Swipe right 3 columns.
+	var x0 := p.active.position.x
+	_touch(0, c, true)
+	await _drag(0, c, c + Vector2(cell * 3.2, 0), 8, 0.2)
+	_touch(0, c + Vector2(cell * 3.2, 0), false)
+	await _wait(0.3)
+	print("GESTURE swipe right: dx=", p.active.position.x - x0)
+	# Tap = rotate CW
+	var r0 := p.active.rotation
+	_touch(0, c, true)
+	await _wait(0.05)
+	_touch(0, c, false)
+	await _wait(0.15)
+	print("GESTURE tap rotate: ", r0, " -> ", p.active.rotation)
+	# Two-finger tap = rotate CCW
+	r0 = p.active.rotation
+	_touch(0, c, true)
+	_touch(1, c + Vector2(60, 0), true)
+	await _wait(0.05)
+	_touch(1, c + Vector2(60, 0), false)
+	_touch(0, c, false)
+	await _wait(0.15)
+	print("GESTURE two-finger: ", r0, " -> ", p.active.rotation)
+	# Long press = hold
+	var held_before := p.hold_piece
+	_touch(0, c, true)
+	await _wait(0.6)
+	_touch(0, c, false)
+	await _wait(0.15)
+	print("GESTURE long press hold: ", held_before == null and p.hold_piece != null)
+	# Soft drop: drag down and keep finger
+	var y0 := p.active.position.y
+	_touch(0, c, true)
+	await _drag(0, c, c + Vector2(0, cell * 2.0), 4, 0.1)
+	await _wait(0.4)
+	print("GESTURE soft drop rows: ", p.active.position.y - y0)
+	_touch(0, c + Vector2(0, cell * 2.0), false)
+	# Flick up = hard drop
+	var placed := p.pieces_placed
+	_touch(0, c, true)
+	await _drag(0, c, c - Vector2(0, cell * 3.0), 3, 0.06)
+	_touch(0, c - Vector2(0, cell * 3.0), false)
+	await _wait(0.2)
+	print("GESTURE flick hard drop: ", p.pieces_placed - placed)
+	await _shot("g_1_after")
+	print("visual test done")
+	get_tree().quit()
 
 
 func _run_knockout() -> void:

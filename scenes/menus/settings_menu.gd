@@ -18,6 +18,15 @@ func _build() -> void:
 	touch.item_selected.connect(func(i): GameSettings.set_value("controls", "touch_controls", ["auto", "on", "off"][i]))
 	add_row(tr("SETTINGS_TOUCH"), touch)
 
+	var scheme := OptionButton.new()
+	var schemes := ["gestures", "buttons"]
+	for opt in schemes:
+		scheme.add_item(tr("SETTINGS_TOUCH_SCHEME_" + opt.to_upper()))
+	scheme.select(maxi(0, schemes.find(String(GameSettings.get_value("controls", "touch_scheme", "gestures")))))
+	scheme.item_selected.connect(func(i): GameSettings.set_value("controls", "touch_scheme", schemes[i]))
+	add_row(tr("SETTINGS_TOUCH_SCHEME"), scheme)
+	_spin_float("SETTINGS_SWIPE_SENS", "controls", "swipe_sensitivity", 0.5, 1.5)
+
 	_spin("SETTINGS_DAS", "controls", "das_ticks", 1, 30)
 	_spin("SETTINGS_ARR", "controls", "arr_ticks", 1, 10)
 
@@ -60,4 +69,15 @@ func _spin(key: String, section: String, setting: String, lo: int, hi: int) -> v
 	s.max_value = hi
 	s.value = GameSettings.get_value(section, setting, lo)
 	s.value_changed.connect(func(v): GameSettings.set_value(section, setting, int(v)))
+	add_row(tr(key), s)
+
+
+func _spin_float(key: String, section: String, setting: String, lo: float, hi: float) -> void:
+	var s := HSlider.new()
+	s.min_value = lo
+	s.max_value = hi
+	s.step = 0.05
+	s.custom_minimum_size.x = 160
+	s.value = float(GameSettings.get_value(section, setting, (lo + hi) * 0.5))
+	s.value_changed.connect(func(v): GameSettings.set_value(section, setting, v))
 	add_row(tr(key), s)

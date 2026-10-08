@@ -9,7 +9,7 @@ const PATH := "user://settings.cfg"
 const DEFAULTS := {
 	"audio": {"master": 0.8, "music": 0.6, "sfx": 0.8},
 	"video": {"screen_shake": true, "show_ghost": true, "color_patterns": false, "particles": true, "piece_tags": true},
-	"controls": {"das_ticks": 10, "arr_ticks": 2, "touch_controls": "auto"},
+	"controls": {"das_ticks": 10, "arr_ticks": 2, "touch_controls": "auto", "touch_scheme": "gestures", "swipe_sensitivity": 0.9},
 	"game": {"language": "", "nickname": ""},
 }
 

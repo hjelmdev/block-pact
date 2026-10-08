@@ -20,7 +20,7 @@ func _ready() -> void:
 
 func bind_match(sim: MatchSimulation, _setup: MatchSetup, controller: Node) -> void:
 	source = controller.get_touch_source()
-	visible = source != null and Platform.want_touch_controls()
+	visible = source != null and Platform.want_touch_controls() and not GestureControls.scheme_active()
 	var power := get_node_or_null(^"%Power") as Control
 	if power:
 		power.visible = sim.powerups_enabled()
