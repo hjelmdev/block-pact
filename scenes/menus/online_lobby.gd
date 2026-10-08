@@ -70,9 +70,7 @@ func _refresh() -> void:
 		var s: Dictionary = slots[i]
 		var row := HBoxContainer.new()
 		row.add_theme_constant_override(&"separation", 8)
-		var sw := ColorRect.new()
-		sw.color = palette.get_color(i)
-		sw.custom_minimum_size = Vector2(10, 36)
+		var sw := AvatarView.make(str(s.get("avatar", "")), palette.get_color(i), 34)
 		var name_l := Label.new()
 		name_l.text = s.name
 		name_l.size_flags_horizontal = Control.SIZE_EXPAND_FILL

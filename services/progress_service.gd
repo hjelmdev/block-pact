@@ -11,6 +11,7 @@ signal score_saved(note: String)
 const ACHIEVEMENT_DIR := "res://data/achievements/"
 
 var nickname: String = ""
+var profile_avatar: String = ""
 var unlocked: Dictionary = {}  # achievement id -> true
 var achievements: Array[AchievementDefinition] = []
 
@@ -40,6 +41,24 @@ func display_name() -> String:
 	if is_tracking() and Auth.provider_name != "":
 		return Auth.provider_name
 	return tr("GUEST_NAME")
+
+
+## Chosen avatar id: the account's (when signed in) or this device's.
+func avatar() -> String:
+	if is_tracking() and profile_avatar != "":
+		return profile_avatar
+	var local: String = GameSettings.get_value("game", "avatar", "")
+	return local if local != "" else Assets.default_avatar(display_name())
+
+
+func set_avatar(id: String) -> void:
+	if not Assets.avatar_ids().has(id):
+		return
+	GameSettings.set_value("game", "avatar", id)
+	if is_tracking():
+		profile_avatar = id
+		await Auth.rest("PATCH", "/rest/v1/profiles?id=eq.%s" % Auth.user_id, {"avatar": id})
+	profile_changed.emit()
 
 
 func set_nickname(value: String) -> void:
@@ -154,12 +173,17 @@ func _check_achievements(stats: Dictionary, mode_id: StringName) -> void:
 func _on_session_changed(logged_in: bool) -> void:
 	unlocked.clear()
 	nickname = ""
+	profile_avatar = ""
 	if not logged_in:
 		profile_changed.emit()
 		return
-	var prof: Dictionary = await Auth.rest("GET", "/rest/v1/profiles?id=eq.%s&select=nickname" % Auth.user_id, null)
+	var prof: Dictionary = await Auth.rest("GET", "/rest/v1/profiles?id=eq.%s&select=nickname,avatar" % Auth.user_id, null)
 	if prof.ok and prof.data is Array and not prof.data.is_empty():
 		nickname = str(prof.data[0].get("nickname", ""))
+		var av = prof.data[0].get("avatar")
+		profile_avatar = str(av) if av != null else ""
+		if profile_avatar == "" and GameSettings.get_value("game", "avatar", "") != "":
+			set_avatar(GameSettings.get_value("game", "avatar", ""))  # carry the guest pick over
 	var ach: Dictionary = await Auth.rest("GET", "/rest/v1/player_achievements?select=achievement_id", null)
 	if ach.ok and ach.data is Array:
 		for row: Dictionary in ach.data:

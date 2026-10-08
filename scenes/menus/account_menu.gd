@@ -6,6 +6,7 @@ var _name_field: TextField
 var _buttons: VBoxContainer
 var _error: Label
 var _achievements: VBoxContainer
+var _avatar_grid: GridContainer
 
 
 func _build() -> void:
@@ -19,6 +20,13 @@ func _build() -> void:
 			Progress.set_nickname(v))
 	_name_field = nick
 	add_row(tr("ACCOUNT_NICKNAME"), nick)
+	add_label(tr("ACCOUNT_AVATAR"), 14, Color(0.7, 0.75, 0.9))
+	_avatar_grid = GridContainer.new()
+	_avatar_grid.columns = 8
+	_avatar_grid.add_theme_constant_override(&"h_separation", 6)
+	_avatar_grid.add_theme_constant_override(&"v_separation", 6)
+	content.add_child(_avatar_grid)
+	_build_avatar_grid()
 	_buttons = VBoxContainer.new()
 	_buttons.add_theme_constant_override(&"separation", 8)
 	content.add_child(_buttons)
@@ -85,3 +93,28 @@ func _refresh_achievements() -> void:
 		hint.add_theme_font_size_override(&"font_size", 12)
 		hint.add_theme_color_override(&"font_color", Color(0.6, 0.65, 0.8))
 		_achievements.add_child(hint)
+
+
+func _build_avatar_grid() -> void:
+	for c in _avatar_grid.get_children():
+		c.queue_free()
+	var current := Progress.avatar()
+	var color := Assets.palette().get_color(0)
+	for id in Assets.avatar_ids():
+		var b := Button.new()
+		b.custom_minimum_size = Vector2(44, 44)
+		b.toggle_mode = true
+		b.button_pressed = id == current
+		b.tooltip_text = id
+		var av := AvatarView.make(id, color if id == current else Color(0.7, 0.72, 0.8), 36)
+		av.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		av.offset_left = 4
+		av.offset_top = 4
+		av.offset_right = -4
+		av.offset_bottom = -4
+		b.add_child(av)
+		b.pressed.connect(func():
+			AudioManager.play(Sfx.UI_CLICK)
+			await Progress.set_avatar(id)
+			_build_avatar_grid())
+		_avatar_grid.add_child(b)

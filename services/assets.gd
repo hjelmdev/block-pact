@@ -42,6 +42,35 @@ func icon(icon_name: StringName) -> Texture2D:
 	return config.icon(icon_name)
 
 
+var _avatar_ids: PackedStringArray = []
+
+
+## Ids of all avatars (file names in GameAssets.avatar_dir), sorted.
+func avatar_ids() -> PackedStringArray:
+	if _avatar_ids.is_empty():
+		var dir := config.avatar_dir.trim_suffix("/") + "/"
+		for f in ResourceLoader.list_directory(dir):
+			if f.ends_with(".png"):
+				_avatar_ids.append(f.get_basename())
+		_avatar_ids.sort()
+	return _avatar_ids
+
+
+func avatar(id: String) -> Texture2D:
+	var ids := avatar_ids()
+	if ids.is_empty():
+		return null
+	if not ids.has(id):
+		id = ids[0]
+	return load(config.avatar_dir.trim_suffix("/") + "/" + id + ".png")
+
+
+## Deterministic avatar for bots / unnamed seats.
+func default_avatar(seed_text: String) -> String:
+	var ids := avatar_ids()
+	return ids[absi(hash(seed_text)) % ids.size()] if not ids.is_empty() else ""
+
+
 func _apply_theme() -> void:
 	if config.ui_theme:
 		get_tree().root.theme = config.ui_theme

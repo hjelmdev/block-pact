@@ -33,6 +33,9 @@ static func human_slot(index: int, device: StringName = &"") -> PlayerSlot:
 	s.display_name = Progress.display_name() if index == 0 else "Player %d" % (index + 1)
 	if index == 0:
 		s.user_id = Progress.user_id()
+		s.avatar = Progress.avatar()
+	else:
+		s.avatar = Assets.default_avatar(s.display_name)
 	return s
 
 
@@ -47,6 +50,7 @@ static func bot_slot(index: int, profile_id: StringName = &"normal", personality
 		personality_id = ids[maxi(index - 1, 0) % ids.size()]
 	s.bot_personality_id = personality_id
 	s.display_name = bot_name(index, personality_id)
+	s.avatar = Assets.default_avatar(BOT_NAMES[index % BOT_NAMES.size()])
 	return s
 
 

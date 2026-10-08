@@ -40,6 +40,7 @@ var rt: RealtimeClient
 var state: int = State.OFFLINE
 var my_key: String = ""
 var my_name: String = "Player"
+var my_avatar: String = ""
 var room_code: String = ""
 var room_public: bool = true
 var is_host: bool = false
@@ -129,7 +130,7 @@ func host_room(public: bool, player_name: String) -> void:
 	lobby = {
 		"mode_id": "shared_competition",
 		"options": MatchOptions.saved_options(),
-		"slots": [_human_slot_dict(1, my_name)],
+		"slots": [_human_slot_dict(1, my_name, Progress.avatar())],
 		"code": room_code,
 	}
 	_ensure_connected()
@@ -176,7 +177,8 @@ func host_add_bot(profile_id := "normal") -> void:
 	var idx: int = lobby.slots.size()
 	var b := MatchFactory.bot_slot(idx, StringName(profile_id))
 	lobby.slots.append({"name": b.display_name, "kind": PlayerSlot.Kind.BOT, "peer_id": 1,
-			"bot_profile_id": String(b.bot_profile_id), "bot_personality_id": String(b.bot_personality_id)})
+			"bot_profile_id": String(b.bot_profile_id), "bot_personality_id": String(b.bot_personality_id),
+			"avatar": b.avatar})
 	_lobby_updated()
 
 
@@ -423,7 +425,7 @@ func _on_presence(topic: String, presence_state: Dictionary) -> void:
 						leave_room()
 						return
 					_hello_sent = true
-					rt.broadcast(_room_topic, "hello", {"from": my_key, "name": my_name, "build": NetProtocol.build_id()})
+					rt.broadcast(_room_topic, "hello", {"from": my_key, "name": my_name, "avatar": Progress.avatar(), "build": NetProtocol.build_id()})
 		elif not is_host and state in [State.IN_ROOM, State.IN_MATCH]:
 			var host_present := false
 			for key: String in presence_state:
@@ -496,7 +498,8 @@ func _host_on_hello(p: Dictionary) -> void:
 	_key_to_peer[key] = pid
 	var pname := str(p.get("name", "Player")).left(16)
 	peers[pid] = {"name": pname, "key": key, "connected": false, "ping_ms": 0}
-	lobby.slots.append(_human_slot_dict(pid, pname))
+	var av := str(p.get("avatar", ""))
+	lobby.slots.append(_human_slot_dict(pid, pname, av if Assets.avatar_ids().has(av) else ""))
 	rt.broadcast(_room_topic, "welcome", {"to": key, "peer_id": pid})
 	var conn := _new_connection(pid)
 	if conn:
@@ -681,8 +684,9 @@ func _advertise() -> void:
 	})
 
 
-func _human_slot_dict(peer_id: int, pname: String) -> Dictionary:
-	return {"name": pname, "kind": HUMAN, "peer_id": peer_id, "bot_profile_id": "", "bot_personality_id": ""}
+func _human_slot_dict(peer_id: int, pname: String, avatar := "") -> Dictionary:
+	return {"name": pname, "kind": HUMAN, "peer_id": peer_id, "bot_profile_id": "", "bot_personality_id": "",
+			"avatar": avatar}
 
 
 func _lobby_to_setup() -> MatchSetup:
@@ -696,6 +700,7 @@ func _lobby_to_setup() -> MatchSetup:
 		ps.display_name = s.name
 		ps.color_index = i
 		ps.peer_id = s.peer_id
+		ps.avatar = str(s.get("avatar", ""))
 		if s.kind == HUMAN:
 			ps.kind = PlayerSlot.Kind.REMOTE
 		else:

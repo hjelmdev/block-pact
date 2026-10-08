@@ -50,10 +50,7 @@ func show_results(sim: MatchSimulation, setup: MatchSetup, ranking: Array, view:
 		var rank := Label.new()
 		rank.text = "#%d" % r.rank
 		rank.custom_minimum_size.x = 36
-		var sw := ColorRect.new()
-		sw.color = view.player_color(p.id)
-		sw.custom_minimum_size = Vector2(14, 14)
-		sw.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		var sw := AvatarView.make(setup.slots[p.id].avatar if p.id < setup.slots.size() else "", view.player_color(p.id), 26)
 		var name_l := Label.new()
 		name_l.text = p.display_name
 		name_l.size_flags_horizontal = Control.SIZE_EXPAND_FILL

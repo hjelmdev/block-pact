@@ -21,13 +21,15 @@ enum Kind { LOCAL_HUMAN, BOT, REMOTE }
 @export var user_id: String = ""
 ## Network peer id when REMOTE.
 @export var peer_id: int = 0
+## Avatar id (see Assets.avatar_ids()), "" = default.
+@export var avatar: String = ""
 
 
 func to_dict() -> Dictionary:
 	return {
 		"display_name": display_name, "kind": kind, "input_device": String(input_device),
 		"bot_profile_id": String(bot_profile_id), "bot_personality_id": String(bot_personality_id), "color_index": color_index, "team": team,
-		"user_id": user_id, "peer_id": peer_id,
+		"user_id": user_id, "peer_id": peer_id, "avatar": avatar,
 	}
 
 
@@ -42,4 +44,5 @@ static func from_dict(d: Dictionary) -> PlayerSlot:
 	s.team = d.get("team", -1)
 	s.user_id = d.get("user_id", "")
 	s.peer_id = d.get("peer_id", 0)
+	s.avatar = str(d.get("avatar", ""))
 	return s

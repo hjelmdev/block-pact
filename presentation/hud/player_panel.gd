@@ -39,6 +39,11 @@ func setup_panel(p_sim: MatchSimulation, p_player_id: int, color: Color, show_pr
 	_team.text = team_text
 	_team.visible = team_text != ""
 	_swatch.color = color
+	if sim.setup and player_id < sim.setup.slots.size():
+		var av := AvatarView.make(sim.setup.slots[player_id].avatar, color, 24)
+		_swatch.get_parent().add_child(av)
+		_swatch.get_parent().move_child(av, _swatch.get_index())
+		_swatch.hide()
 	var sb := StyleBoxFlat.new()
 	sb.bg_color = Color(color.r * 0.12, color.g * 0.12, color.b * 0.12, 0.92)
 	sb.border_color = color.darkened(0.2)

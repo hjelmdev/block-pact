@@ -11,6 +11,9 @@ extends Resource
 ## Icons used by touch controls and HUD buttons, keyed by name
 ## (left, right, down, hard_drop, rotate_cw, rotate_ccw, hold, pause).
 @export var icons: Dictionary = {}
+## Folder with player avatar images (white/grey art, tinted with the
+## player's color). File names without extension are the avatar ids.
+@export_dir var avatar_dir: String = "res://ui/avatars/"
 @export var menu_background_color: Color = Color(0.035, 0.04, 0.065)
 @export var accent_color: Color = Color(0.35, 0.85, 1.0)
 

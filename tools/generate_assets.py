@@ -430,6 +430,49 @@ def special_art():
         _render_art(rows, 4).save(os.path.join(ICONS, f"{name}.png"))
 
 
+AVATARS = os.path.join(ROOT, "ui", "avatars")
+
+
+def avatars(count=16):
+    """Symmetric pixel critters (identicon style). White body + dark outline,
+    tinted with the player's color at runtime."""
+    os.makedirs(AVATARS, exist_ok=True)
+    rng = np.random.default_rng(20261008)
+    made = 0
+    attempt = 0
+    while made < count and attempt < 500:
+        attempt += 1
+        half = rng.random((10, 5)) < 0.5
+        half[:, 4] |= rng.random(10) < 0.35  # thicker spine
+        half[0:2, :] &= rng.random((2, 5)) < 0.4  # sparse antennae
+        body = np.concatenate([half, half[:, ::-1]], axis=1)  # 10 x 10
+        filled = body.sum()
+        if filled < 38 or filled > 66:
+            continue
+        # eyes: two holes in the upper half
+        ey = int(rng.integers(3, 5))
+        ex = int(rng.integers(1, 4))
+        body[ey, ex] = body[ey, 9 - ex] = True
+        img = np.zeros((16, 16, 4), dtype=np.uint8)
+        ox, oy = 3, 3
+        for y in range(10):
+            for x in range(10):
+                if body[y, x]:
+                    for dx in (-1, 0, 1):
+                        for dy in (-1, 0, 1):
+                            px, py = ox + x + dx, oy + y + dy
+                            if 0 <= px < 16 and 0 <= py < 16 and img[py, px, 3] == 0:
+                                img[py, px] = (14, 12, 24, 255)
+        for y in range(10):
+            for x in range(10):
+                if body[y, x]:
+                    shade = 255 if y < 7 else 215
+                    img[oy + y, ox + x] = (shade, shade, shade, 255)
+        img[oy + ey, ox + ex] = img[oy + ey, ox + 9 - ex] = (14, 12, 24, 255)
+        Image.fromarray(img, "RGBA").save(os.path.join(AVATARS, "avatar_%02d.png" % (made + 1)))
+        made += 1
+
+
 def fx_sfx():
     os.makedirs(SFX, exist_ok=True)
     w = lambda name, s, v=0.6: write(os.path.join(SFX, f"{name}.wav"), s, v)
@@ -606,6 +649,9 @@ if __name__ == "__main__":
     import sys
     for d in (TEX, PAT, SFX, MUSIC):
         os.makedirs(d, exist_ok=True)
+    if "--avatars-only" in sys.argv:
+        avatars()
+        sys.exit(0)
     if "--fx-only" in sys.argv:
         special_art()
         fx_sfx()

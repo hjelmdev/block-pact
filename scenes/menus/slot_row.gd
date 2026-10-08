@@ -41,9 +41,19 @@ func _ready() -> void:
 	_remove.pressed.connect(func(): remove_requested.emit(self))
 
 
+var _avatar: AvatarView
+
+
 func set_slot(p_slot: PlayerSlot, color: Color) -> void:
 	slot = p_slot
 	_swatch.color = color
+	if _avatar == null:
+		_avatar = AvatarView.make(slot.avatar, color, 34)
+		add_child(_avatar)
+		move_child(_avatar, _swatch.get_index())
+		_swatch.hide()
+	else:
+		_avatar.set_avatar(slot.avatar, color)
 	_kind.select(_kind.get_item_index(slot.kind))
 	_name.text = slot.display_name
 	_fill_detail()

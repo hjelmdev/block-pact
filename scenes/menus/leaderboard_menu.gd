@@ -88,7 +88,10 @@ func _row(rank: int, r: Dictionary) -> Control:
 	if mine:
 		name_l.add_theme_color_override(&"font_color", gold)
 		score_l.add_theme_color_override(&"font_color", gold)
-	for c in [rank_l, name_l, lines_l, score_l]:
+	var av = r.get("avatar")
+	var avatar := AvatarView.make(str(av) if av != null else Assets.default_avatar(str(r.get("nickname", ""))),
+			Color(1, 0.84, 0.3) if mine else Color(0.75, 0.8, 0.95), 26)
+	for c in [rank_l, avatar, name_l, lines_l, score_l]:
 		row.add_child(c)
 	return row
 
