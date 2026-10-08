@@ -15,6 +15,7 @@ func _init() -> void:
 	_test_active_collision()
 	_test_bot_plays()
 	_test_lockstep_two_peers()
+	_test_lockstep_away()
 	_test_special_effects()
 	_test_powerups()
 	_test_knockout()
@@ -519,3 +520,96 @@ func _test_replay() -> void:
 	evil = wire.duplicate(true)
 	evil.ticks = replay.ticks + 1
 	_check(MatchReplay.from_dict(evil).has("error"), "replay: wrong length rejected")
+
+
+## A client's tab goes to the background: the host keeps its seat going
+## with empty inputs, the client replays the backlog when it returns and
+## takes its seat back. Both must end up with identical input histories.
+func _test_lockstep_away() -> void:
+	var peers := []
+	for me in 2:
+		var setup := _make_setup(3, 31)
+		var sim := MatchSimulation.new(setup)
+		var sources: Array[InputSource] = []
+		var local: Array[int] = []
+		for slot in 3:
+			var src: InputSource
+			if slot == me:
+				src = RandomSource.new(500 + me)
+				local.append(slot)
+			elif slot == 2 and me == 0:
+				src = BotInputSource.new(BotProfile.load_profile(&"normal"))
+				local.append(slot)
+			else:
+				src = InputSource.new()
+			src.bind(sim, slot)
+			sources.append(src)
+		var ls := NetLockstep.new(sim, sources, local, 4)
+		sim.start()
+		peers.append({"sim": sim, "ls": ls, "queue": [], "last": 0})
+	var frame_now := [0]
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 8
+	# Ordered (reliable) fake channel with random latency.
+	var post := func(to: int, msg: Array) -> void:
+		var p: Dictionary = peers[to]
+		var at := maxi(p.last, frame_now[0] + rng.randi_range(1, 6))
+		p.last = at
+		p.queue.append([at, msg])
+	for i in 2:
+		peers[i].ls.send_inputs.connect(func(slot, first, bits): post.call(1 - i, ["in", slot, first, bits]))
+	var hidden := false
+	var returning := false
+	var away_until := 1800
+	var host_tick_at_hide := 0
+	var host_ticks_hidden := 0
+	var seat_back_tick := -1
+	for frame in 4200:
+		frame_now[0] = frame
+		if frame == 800:
+			hidden = true
+			host_tick_at_hide = peers[0].sim.tick_count
+			peers[1].ls.go_away()
+			post.call(0, ["away"])
+		if frame == away_until:
+			host_ticks_hidden = peers[0].sim.tick_count - host_tick_at_hide
+			hidden = false
+			returning = true
+		for i in 2:
+			if i == 1 and hidden:
+				continue  # the browser runs nothing in a hidden tab
+			var p: Dictionary = peers[i]
+			while not p.queue.is_empty() and p.queue[0][0] <= frame:
+				var m: Array = p.queue.pop_front()[1]
+				match m[0]:
+					"in":
+						p.ls.receive(m[1], m[2], m[3])
+					"away":
+						p.ls.take_over(1)
+					"back":
+						post.call(1, ["seat", 1, p.ls.release(1)])
+					"seat":
+						seat_back_tick = m[2]
+						p.ls.resume(m[1], m[2])
+			p.ls.update()
+			if i == 1 and returning and p.ls.caught_up():
+				returning = false
+				post.call(0, ["back"])
+	var a: Array = peers[0].ls.input_log
+	var b: Array = peers[1].ls.input_log
+	var n := mini(a.size(), b.size())
+	var same := n > 0
+	for t in n:
+		if a[t] != b[t]:
+			same = false
+			break
+	var played_after := false
+	for t in range(maxi(seat_back_tick, 0), n):
+		if a[t][1] != 0:
+			played_after = true
+			break
+	print("    away: host %d ticks (%d while client hidden), client %d, seat back at %d" % [a.size(), host_ticks_hidden, b.size(), seat_back_tick])
+	_check(host_ticks_hidden > 900 or peers[0].sim.finished, "away: the others keep playing while a tab is hidden")
+	_check(seat_back_tick > 0, "away: the client takes its seat back after catching up")
+	_check(same and abs(a.size() - b.size()) < 20, "away: both peers have identical histories")
+	_check(played_after, "away: the returning player plays again")

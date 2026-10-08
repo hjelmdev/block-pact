@@ -9,6 +9,9 @@ var role := "host"
 var dir := "user://online_test"
 var seconds := 25.0
 var leave_after := -1.0
+## Simulate a hidden browser tab: the game loop stops for `hide_for` seconds.
+var hide_at := -1.0
+var hide_for := 0.0
 var _hashes: PackedStringArray = []
 var _sim: MatchSimulation
 
@@ -18,6 +21,10 @@ func _ready() -> void:
 	var la := a.find("--leave-after")
 	if la >= 0:
 		leave_after = float(a[la + 1])
+	var ha := a.find("--hide-at")
+	if ha >= 0:
+		hide_at = float(a[ha + 1])
+		hide_for = float(a[ha + 2]) if ha + 2 < a.size() else 10.0
 	for k in ["--role", "--dir", "--seconds"]:
 		var i := a.find(k)
 		if i >= 0 and i + 1 < a.size():
@@ -152,13 +159,24 @@ func _run() -> void:
 			print("[%s] leaving mid-match at tick %d" % [role, _sim.tick_count])
 			Net.leave_room()
 			break
+		if hide_at > 0.0 and elapsed >= hide_at:
+			hide_at = -1.0
+			print("[%s] tab hidden at tick %d" % [role, _sim.tick_count])
+			Platform.set_page_visible(false)
+			ctrl.process_mode = Node.PROCESS_MODE_DISABLED
+			await _wait(hide_for)
+			elapsed += hide_for
+			ctrl.process_mode = Node.PROCESS_MODE_INHERIT
+			Platform.set_page_visible(true)
+			print("[%s] tab visible again at tick %d" % [role, _sim.tick_count])
+			ctrl.net_catching_up.connect(func(on): if not on: print("[%s] seat back at tick %d" % [role, _sim.tick_count]))
 		if _sim.tick_count % 120 == 0 and _sim.tick_count != last_logged and _sim.tick_count > 0:
 			last_logged = _sim.tick_count
 			_hashes.append("%d %d" % [_sim.tick_count, NetProtocol.state_hash(_sim)])
 	var out := FileAccess.open("%s/%s_hashes.txt" % [dir, role], FileAccess.WRITE)
 	out.store_string("\n".join(_hashes))
 	out.close()
-	print("[%s] done: tick %d, lines %d, stalls %d, finished %s" % [role, _sim.tick_count, _sim.total_lines, ctrl.lockstep.stalled_frames, _sim.finished])
+	print("[%s] done: tick %d, lines %d, stalls %d, finished %s, local seats %s" % [role, _sim.tick_count, _sim.total_lines, ctrl.lockstep.stalled_frames, _sim.finished, ctrl.lockstep.local_slots])
 	await _wait(1.0 if role == "host" else 3.0)
 	get_tree().quit(0)
 

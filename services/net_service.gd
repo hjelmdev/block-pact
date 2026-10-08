@@ -23,6 +23,13 @@ signal peer_dropped(peer_id: int)
 signal host_lost()
 signal return_to_lobby()
 signal desync_detected(tick: int)
+## Host side: a player's tab went to the background / came back.
+signal peer_away(peer_id: int)
+signal peer_back(peer_id: int)
+## Client side: our seat is ours again from `tick` (after being away).
+signal seat_returned(slot: int, tick: int)
+## UI: seat `slot` is away or back (-1 = the host).
+signal away_info(slot: int, away: bool)
 ## Chat line added to [member chat_log] ({key, name, text, system}).
 signal chat_received(entry: Dictionary)
 ## In-match quick emote from a player (realtime key + emote id).
@@ -173,6 +180,9 @@ func host_room(public: bool, player_name: String) -> void:
 	_room.inputs_received.connect(func(s, f, b): inputs_received.emit(s, f, b))
 	_room.peer_dropped.connect(func(p): peer_dropped.emit(p))
 	_room.desync_detected.connect(func(t): desync_detected.emit(t))
+	_room.peer_away.connect(func(p): peer_away.emit(p))
+	_room.peer_back.connect(func(p): peer_back.emit(p))
+	_room.away_info.connect(func(sl, a): away_info.emit(sl, a))
 	_room.advert_changed.connect(_advertise)
 	_room.match_start.connect(func(setup, delay):
 		_set_state(State.IN_MATCH)
@@ -339,6 +349,26 @@ func send_hash(tick: int, h: int) -> void:
 		_room.send_hash(tick, h)
 	else:
 		_send(1, [NetProtocol.MSG_HASH, tick, h])
+
+
+## Our tab went to the background (true) or is visible again (false).
+## A client only reports "away"; it says "back" with send_back() once it
+## has caught up. A hosting player just informs the others.
+func set_away(away: bool) -> void:
+	if _room:
+		_room.set_away(away)
+	elif away:
+		_send(1, [NetProtocol.MSG_AWAY])
+
+
+func send_back() -> void:
+	if not _room:
+		_send(1, [NetProtocol.MSG_BACK])
+
+
+func return_seat(slot: int, tick: int) -> void:
+	if _room:
+		_room.return_seat(slot, tick)
 
 
 # --------------------------------------------------------------------------
@@ -527,6 +557,12 @@ func _on_packet(_from: int, msg: Array) -> void:
 			return_to_lobby.emit()
 		NetProtocol.MSG_SLOT_LEFT:
 			pass
+		NetProtocol.MSG_SEAT_BACK:
+			if msg.size() >= 3:
+				seat_returned.emit(int(msg[1]), int(msg[2]))
+		NetProtocol.MSG_AWAY_INFO:
+			if msg.size() >= 3:
+				away_info.emit(int(msg[1]), bool(msg[2]))
 
 
 func _send(target: int, msg: Array) -> void:

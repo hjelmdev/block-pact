@@ -183,3 +183,6 @@ RESULTS_VERIFYING,Result sent – the server is checking it…,Resultatet skicka
 RESULTS_REJECTED,The server could not reproduce this result – it was not saved.,Servern kunde inte återskapa resultatet – det sparades inte.
 RESULTS_OUTDATED,This game version is outdated – update to get on the leaderboard.,Den här spelversionen är för gammal – uppdatera för att komma med på topplistan.
 RESULTS_VERIFY_LATER,Result sent. It shows up on the leaderboard once the server has checked it.,Resultatet skickat. Det syns på topplistan när servern har kontrollerat det.
+ONLINE_PLAYER_AWAY,%s left the game tab – their pieces keep falling until they are back.,%s har lämnat spelfliken – deras klossar faller tills de är tillbaka.
+ONLINE_HOST_AWAY,The host's game tab is in the background – the game continues when it is back.,Hostens spelflik ligger i bakgrunden – spelet fortsätter när den är tillbaka.
+ONLINE_CATCHING_UP,Catching up…,Kommer ikapp…

@@ -30,6 +30,11 @@ signal desync_detected(tick: int)
 signal host_lost()  # never emitted – the host is the authority
 ## Something shown in the public room list changed (re-advertise).
 signal advert_changed()
+## A player's tab went to the background / came back (in a match).
+signal peer_away(peer_id: int)
+signal peer_back(peer_id: int)
+## For the UI: seat `slot` is away (-1 = the host itself).
+signal away_info(slot: int, away: bool)
 
 enum State { CLOSED, LOBBY, IN_MATCH }
 
@@ -62,6 +67,8 @@ var _key_to_peer: Dictionary = {}
 var _next_peer_id := 2
 var _ping_timer := 0.0
 var _hashes: Dictionary = {}
+## peer_id -> true while that player's tab is in the background (in a match).
+var _away: Dictionary = {}
 
 
 func _init(p_rt: RealtimeClient, p_presence_key: String, p_host_name: String, p_has_local_seat: bool,
@@ -299,6 +306,28 @@ func send_hash(tick: int, h: int) -> void:
 	_hashes[tick] = h
 
 
+## The hosting player's own tab is hidden: nobody can move until it is back.
+func set_away(away: bool) -> void:
+	_send(0, [NetProtocol.MSG_AWAY_INFO, -1, away])
+	away_info.emit(-1, away)
+
+
+## After MSG_BACK: the seat belongs to its player again from `tick`.
+func return_seat(slot: int, tick: int) -> void:
+	var pid := _peer_for_slot(slot)
+	if pid != 0:
+		_send(pid, [NetProtocol.MSG_SEAT_BACK, slot, tick])
+	_send(0, [NetProtocol.MSG_AWAY_INFO, slot, false])
+	away_info.emit(slot, false)
+
+
+func _peer_for_slot(slot: int) -> int:
+	var slots: Array = lobby.get("slots", [])
+	if slot < 0 or slot >= slots.size() or slots[slot].kind != HUMAN:
+		return 0
+	return int(slots[slot].peer_id)
+
+
 # --------------------------------------------------------------------------
 # Realtime events for this room's channel (routed by the owner)
 
@@ -405,6 +434,7 @@ func _drop_peer(pid: int) -> void:
 		return
 	var was_connected: bool = peers[pid].get("connected", false)
 	peers.erase(pid)
+	_away.erase(pid)
 	for key: String in _key_to_peer.keys():
 		if _key_to_peer[key] == pid:
 			_key_to_peer.erase(key)
@@ -469,6 +499,9 @@ func _on_packet(from: int, msg: Array) -> void:
 		NetProtocol.MSG_INPUTS:
 			if msg.size() < 4 or not (msg[3] is PackedByteArray):
 				return
+			# While away the host feeds that seat; late packets would clash.
+			if _away.has(from):
+				return
 			# Only accept inputs for seats owned by the sender.
 			if not _slots_for_peer(from).has(int(msg[1])):
 				return
@@ -488,6 +521,17 @@ func _on_packet(from: int, msg: Array) -> void:
 				peers[from].ping_ms = Time.get_ticks_msec() - int(msg[1])
 				if state == State.LOBBY:
 					_lobby_updated(false)
+		NetProtocol.MSG_AWAY:
+			if state == State.IN_MATCH and not _away.has(from) and not _slots_for_peer(from).is_empty():
+				_away[from] = true
+				peer_away.emit(from)
+				for i in _slots_for_peer(from):
+					_send(0, [NetProtocol.MSG_AWAY_INFO, i, true])
+					away_info.emit(i, true)
+		NetProtocol.MSG_BACK:
+			if _away.has(from):
+				_away.erase(from)
+				peer_back.emit(from)
 		NetProtocol.MSG_CMD:
 			if msg.size() >= 2:
 				apply_command(from, str(msg[1]), msg[2] if msg.size() > 2 else null)
@@ -537,6 +581,7 @@ func _lobby_updated(notify_list := true) -> void:
 func _set_state(s: int) -> void:
 	if s != state:
 		state = s
+		_away.clear()
 		state_changed.emit(s)
 		advert_changed.emit()
 

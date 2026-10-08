@@ -14,6 +14,10 @@ signal countdown_tick(value: int)
 signal net_waiting(slots: Array)
 signal net_desync(tick: int)
 signal net_host_lost()
+## Online: seat `slot` went away / came back (-1 = the host). For the UI.
+signal net_away(slot: int, away: bool)
+## Online: we are replaying what happened while our tab was hidden.
+signal net_catching_up(active: bool)
 
 @export var countdown_seconds: int = 3
 
@@ -33,9 +37,15 @@ var net_delay: int = 4
 var lockstep: NetLockstep
 ## Lockstep endpoint: the Net autoload (players) or a RoomHost (server).
 ## Needs send_inputs(), send_hash(), is_authority() and the signals
-## inputs_received, peer_dropped, desync_detected, host_lost.
+## inputs_received, peer_dropped, desync_detected, host_lost; optionally
+## peer_away, peer_back, seat_returned, away_info, set_away(), send_back(),
+## return_seat() for players whose browser tab goes to the background.
 var endpoint: Object
 var _waiting := false
+## Our tab was hidden; waiting to catch up before taking our seat back.
+var _away := false
+var _returning := false
+var _net_links: Array = []  # [signal, callable] pairs to disconnect
 const HASH_INTERVAL := 120
 
 var _touch_source: TouchInputSource
@@ -121,10 +131,73 @@ func _setup_lockstep() -> void:
 		endpoint = Net
 	lockstep = NetLockstep.new(sim, sources, local, net_delay)
 	lockstep.send_inputs.connect(endpoint.send_inputs)
-	endpoint.inputs_received.connect(lockstep.receive)
-	endpoint.peer_dropped.connect(_on_net_peer_dropped)
-	endpoint.desync_detected.connect(_on_net_desync)
-	endpoint.host_lost.connect(_on_net_host_lost)
+	_link(&"inputs_received", lockstep.receive)
+	_link(&"peer_dropped", _on_net_peer_dropped)
+	_link(&"desync_detected", _on_net_desync)
+	_link(&"host_lost", _on_net_host_lost)
+	_link(&"peer_away", _on_net_peer_away)
+	_link(&"peer_back", _on_net_peer_back)
+	_link(&"seat_returned", _on_net_seat_returned)
+	_link(&"away_info", func(slot, away): net_away.emit(slot, away))
+	if not local_human_ids().is_empty() and endpoint.has_method(&"set_away"):
+		Platform.page_visibility_changed.connect(_on_page_visibility)
+
+
+func _link(sig: StringName, callable: Callable) -> void:
+	if endpoint.has_signal(sig):
+		var s: Signal = endpoint.get(sig)
+		s.connect(callable)
+		_net_links.append([s, callable])
+
+
+## Browsers stop running hidden tabs. A client hands its seat to the host
+## (which keeps it going with empty inputs) so the others can play on, and
+## takes it back after replaying what it missed.
+func _on_page_visibility(visible: bool) -> void:
+	if not net_mode or sim == null or sim.finished:
+		return
+	if endpoint.is_authority():
+		endpoint.set_away(not visible)
+		return
+	if not visible:
+		if not _away:
+			_away = true
+			_returning = false
+			lockstep.go_away()
+			endpoint.set_away(true)
+	elif _away:
+		_returning = true
+		net_catching_up.emit(true)
+
+
+func _on_net_peer_away(peer_id: int) -> void:
+	if not endpoint.is_authority():
+		return
+	for i in _slots_of_peer(peer_id):
+		lockstep.take_over(i)
+
+
+func _on_net_peer_back(peer_id: int) -> void:
+	if not endpoint.is_authority():
+		return
+	for i in _slots_of_peer(peer_id):
+		endpoint.return_seat(i, lockstep.release(i))
+
+
+func _on_net_seat_returned(slot: int, tick: int) -> void:
+	if _away:
+		lockstep.resume(slot, tick)
+		_away = false
+		_returning = false
+		net_catching_up.emit(false)
+
+
+func _slots_of_peer(peer_id: int) -> Array[int]:
+	var out: Array[int] = []
+	for i in setup.slots.size():
+		if setup.slots[i].kind == PlayerSlot.Kind.REMOTE and setup.slots[i].peer_id == peer_id:
+			out.append(i)
+	return out
 
 
 func _on_net_desync(tick: int) -> void:
@@ -138,13 +211,15 @@ func _on_net_host_lost() -> void:
 func _on_net_peer_dropped(peer_id: int) -> void:
 	if not endpoint.is_authority():
 		return
-	for i in setup.slots.size():
-		if setup.slots[i].kind == PlayerSlot.Kind.REMOTE and setup.slots[i].peer_id == peer_id:
-			lockstep.take_over(i)
+	for i in _slots_of_peer(peer_id):
+		lockstep.take_over(i)
 
 
 func _net_step() -> void:
 	var steps := lockstep.update()
+	if _returning and lockstep.caught_up():
+		_returning = false
+		endpoint.send_back()
 	if steps > 0:
 		if _waiting:
 			_waiting = false
@@ -221,9 +296,9 @@ func _report_bot_learning() -> void:
 func _exit_tree() -> void:
 	for s in sources:
 		s.dispose()
-	if lockstep and is_instance_valid(endpoint):
-		var pairs := [[endpoint.inputs_received, lockstep.receive], [endpoint.peer_dropped, _on_net_peer_dropped],
-				[endpoint.desync_detected, _on_net_desync], [endpoint.host_lost, _on_net_host_lost]]
-		for pair in pairs:
-			if (pair[0] as Signal).is_connected(pair[1]):
-				(pair[0] as Signal).disconnect(pair[1])
+	for pair in _net_links:
+		if (pair[0] as Signal).is_connected(pair[1]):
+			(pair[0] as Signal).disconnect(pair[1])
+	_net_links.clear()
+	if Platform.page_visibility_changed.is_connected(_on_page_visibility):
+		Platform.page_visibility_changed.disconnect(_on_page_visibility)

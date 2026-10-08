@@ -181,6 +181,7 @@ func _open_room() -> RoomHost:
 	room.match_start.connect(_on_match_start.bind(code))
 	room.return_to_lobby.connect(_end_match.bind(code))
 	room.status.connect(func(t, _e): _log("room %s: %s" % [code, t]))
+	room.away_info.connect(func(slot, away): _log("room %s: seat %d %s" % [code, slot, "away (tab hidden)" if away else "back"]))
 	room.lobby_changed.connect(func(): pass)
 	_log("room %s opened (%d rooms)" % [code, rooms.size()])
 	_advert_dirty = true

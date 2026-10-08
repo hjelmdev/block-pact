@@ -13,6 +13,10 @@ extends RefCounted
 signal send_inputs(slot: int, first_tick: int, bits: PackedByteArray)
 
 const MAX_CATCH_UP := 4
+## Ticks per frame while replaying a backlog (after being away).
+const FAST_CATCH_UP := 120
+## Backlog (beyond the input delay) that switches to fast catch-up.
+const FAST_THRESHOLD := 20
 
 var sim: MatchSimulation
 var sources: Array[InputSource]
@@ -78,48 +82,113 @@ func take_over(slot: int) -> void:
 
 ## Call once per physics frame. Returns how many ticks were simulated.
 func update() -> int:
-	# 1) Sample local seats up to `delay` ticks ahead of the simulation.
+	# Far behind (we were away and the host kept our seat going): replay the
+	# buffered ticks quickly, sampling local seats as the simulation moves.
+	var budget := FAST_CATCH_UP if ticks_buffered() > delay + FAST_THRESHOLD else MAX_CATCH_UP
+	var fast := budget > MAX_CATCH_UP
 	var first := next_local
 	var sampled := {}
-	var guard := 0
-	while next_local < sim.tick_count + delay + 1 and guard < MAX_CATCH_UP:
-		for slot in local_slots:
-			var b := sources[slot].gather(sim.tick_count)
-			b = clampi(b, 0, 255)
-			frames[slot][next_local] = b
-			if not sampled.has(slot):
-				sampled[slot] = PackedByteArray()
-			sampled[slot].append(b)
-		next_local += 1
-		guard += 1
+	var sampled_count := 0
+	var steps := 0
+	while true:
+		# 1) Sample local seats up to `delay` ticks ahead of the simulation.
+		while next_local < sim.tick_count + delay + 1 and sampled_count < budget:
+			for slot in local_slots:
+				var b := sources[slot].gather(sim.tick_count)
+				b = clampi(b, 0, 255)
+				frames[slot][next_local] = b
+				if not sampled.has(slot):
+					sampled[slot] = PackedByteArray()
+				sampled[slot].append(b)
+			next_local += 1
+			sampled_count += 1
+		# 2) Advance while every seat's input for the next tick is known.
+		if steps >= budget or sim.finished or not _step_if_ready():
+			break
+		steps += 1
+		# Normal pace: only catch up when behind the local sampling horizon.
+		if not fast and sim.tick_count + delay >= next_local:
+			break
 	for slot: int in sampled:
 		send_inputs.emit(slot, first, sampled[slot])
-
-	# 2) Advance while every seat's input for the next tick is known.
-	var steps := 0
-	while steps < MAX_CATCH_UP and not sim.finished:
-		var t := sim.tick_count
-		var inputs := PackedInt32Array()
-		inputs.resize(frames.size())
-		var ready := true
-		for slot in frames.size():
-			if not frames[slot].has(t):
-				ready = false
-				break
-			inputs[slot] = frames[slot][t]
-		if not ready:
-			break
-		for slot in frames.size():
-			frames[slot].erase(t)
-		input_log.append(inputs)
-		sim.step(inputs)
-		steps += 1
-		# Only catch up when we are behind the local sampling horizon.
-		if sim.tick_count + delay >= next_local:
-			break
 	if steps == 0:
 		stalled_frames += 1
 	return steps
+
+
+func _step_if_ready() -> bool:
+	var t := sim.tick_count
+	var inputs := PackedInt32Array()
+	inputs.resize(frames.size())
+	for slot in frames.size():
+		if not frames[slot].has(t):
+			return false
+		inputs[slot] = frames[slot][t]
+	for slot in frames.size():
+		frames[slot].erase(t)
+	input_log.append(inputs)
+	sim.step(inputs)
+	return true
+
+
+## How many ticks ahead of the simulation every remote seat's input is known.
+func ticks_buffered() -> int:
+	var lead := -1
+	for slot in frames.size():
+		if is_local(slot):
+			continue
+		var n := 0
+		while frames[slot].has(sim.tick_count + n):
+			n += 1
+		lead = n if lead < 0 else mini(lead, n)
+	return maxi(lead, 0)
+
+
+## True when we are roughly live again (not replaying a backlog).
+func caught_up() -> bool:
+	return ticks_buffered() <= delay + FAST_THRESHOLD / 2
+
+
+# --------------------------------------------------------------------------
+# Away / back (a player's browser tab went to the background)
+
+## Client: stop sending for our seats; the host feeds them from the next
+## tick we have not sent yet. Returns the seats given away.
+func go_away() -> Array[int]:
+	var gone := local_slots.duplicate()
+	for slot in gone:
+		recv_next[slot] = next_local
+	local_slots.clear()
+	return gone
+
+
+## Client: the host hands `slot` back; we sample it again from `tick`.
+## Ticks before that come from the host (already relayed, ordered channel).
+func resume(slot: int, tick: int) -> void:
+	if is_local(slot):
+		return
+	if local_slots.is_empty():
+		next_local = maxi(tick, sim.tick_count)
+	else:
+		# Other local seats already sampled ahead: give this one empty
+		# inputs up to there so every seat stays in step.
+		var fill := PackedByteArray()
+		for t in range(tick, next_local):
+			frames[slot][t] = 0
+			fill.append(0)
+		if not fill.is_empty():
+			send_inputs.emit(slot, tick, fill)
+	local_slots.append(slot)
+
+
+## Host: stop feeding a taken-over seat. The owner sends from the returned
+## tick on (everything before it has already been sent by us).
+func release(slot: int) -> int:
+	if not is_local(slot):
+		return recv_next[slot]
+	local_slots.erase(slot)
+	recv_next[slot] = next_local
+	return next_local
 
 
 func missing_slots() -> Array[int]:

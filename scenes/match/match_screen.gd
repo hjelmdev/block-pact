@@ -32,6 +32,7 @@ var _online := false
 var _notice: Label
 var _emote_button: Button
 var _emote_bar: PanelContainer
+var _host_away := false
 
 
 func _ready() -> void:
@@ -67,6 +68,8 @@ func _ready() -> void:
 		controller.net_waiting.connect(_on_net_waiting)
 		controller.net_host_lost.connect(_on_host_lost)
 		controller.net_desync.connect(func(t): _show_notice(tr("ONLINE_DESYNC") % t, Color(1, 0.6, 0.4)))
+		controller.net_away.connect(_on_net_away)
+		controller.net_catching_up.connect(func(on): _show_notice(tr("ONLINE_CATCHING_UP") if on else "", Color(0.6, 0.9, 1)))
 		Net.return_to_lobby.connect(_on_net_return_to_lobby)
 		Net.emote_received.connect(_on_emote)
 		_build_emotes()
@@ -322,6 +325,8 @@ func _show_notice(text: String, color := Color(1, 1, 1)) -> void:
 
 
 func _on_net_waiting(slots: Array) -> void:
+	if _host_away:
+		return
 	if slots.is_empty():
 		_show_notice("")
 		return
@@ -329,6 +334,19 @@ func _on_net_waiting(slots: Array) -> void:
 	for i: int in slots:
 		names.append(sim.get_player(i).display_name)
 	_show_notice(tr("ONLINE_WAITING_FOR") % ", ".join(names), Color(1, 0.9, 0.5))
+
+
+## Someone's browser tab went to the background (or came back).
+func _on_net_away(slot: int, away: bool) -> void:
+	if slot < 0:
+		_host_away = away
+	if not away:
+		_show_notice("")
+		return
+	if slot < 0:
+		_show_notice(tr("ONLINE_HOST_AWAY"), Color(1, 0.9, 0.5))
+	elif sim and slot < sim.players.size() and not controller.local_human_ids().has(slot):
+		_show_notice(tr("ONLINE_PLAYER_AWAY") % sim.get_player(slot).display_name, Color(1, 0.9, 0.5))
 
 
 func _on_host_lost() -> void:

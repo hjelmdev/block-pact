@@ -5,7 +5,7 @@ extends RefCounted
 
 ## Bump when the simulation or protocol changes – peers must match exactly
 ## because lockstep requires bit-identical simulations.
-const VERSION := 3
+const VERSION := 4
 
 const MSG_HELLO := 1        # C->H [name, user_id, version]
 const MSG_LOBBY := 2        # H->C [lobby_dict]
@@ -19,6 +19,10 @@ const MSG_TO_LOBBY := 9     # H->C []
 const MSG_DESYNC := 10      # H->C [tick]
 const MSG_SLOT_LEFT := 11   # H->C [slot] (info only; host keeps feeding inputs)
 const MSG_CMD := 12         # leader->H [command, arg] (server rooms: mode/options/add_bot/remove/start/to_lobby)
+const MSG_AWAY := 13        # C->H [] my tab went to the background – feed my seat
+const MSG_BACK := 14        # C->H [] caught up again – give my seat back
+const MSG_SEAT_BACK := 15   # H->C [slot, tick] your seat is yours again from `tick`
+const MSG_AWAY_INFO := 16   # H->C [slot, away] for the UI (slot -1 = the host itself)
 
 const ROOM_PREFIX := "bp-room-"
 const LOBBY_CHANNEL := "bp-lobbies"

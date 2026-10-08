@@ -4,10 +4,15 @@ extends Node
 ## OAuth redirects, etc.).
 
 signal layout_changed(is_portrait: bool)
+## Web: the browser tab was hidden (false) or shown again (true). Browsers
+## stop running the game in hidden tabs, so online play has to know.
+signal page_visibility_changed(visible: bool)
 
 const WEB_HELPER_JS := "res://platform/web/block_pact_web.js"
 
 var _portrait := false
+var page_visible := true
+var _visibility_cb: JavaScriptObject
 
 
 func _ready() -> void:
@@ -88,6 +93,18 @@ func _install_web_helpers() -> void:
 	var f := FileAccess.open(WEB_HELPER_JS, FileAccess.READ)
 	if f:
 		JavaScriptBridge.eval(f.get_as_text(), true)
+	# Runs synchronously from the browser event, so a message can still go
+	# out before the browser stops the game loop.
+	_visibility_cb = JavaScriptBridge.create_callback(func(_args): set_page_visible(not _js_bool("document.hidden")))
+	JavaScriptBridge.get_interface("document").addEventListener("visibilitychange", _visibility_cb)
+
+
+## Also used by tests to simulate a hidden tab.
+func set_page_visible(v: bool) -> void:
+	if v == page_visible:
+		return
+	page_visible = v
+	page_visibility_changed.emit(v)
 
 
 func _on_size_changed() -> void:
