@@ -36,6 +36,13 @@ var _flashes: Dictionary = {}  # Vector2i -> time left (sec)
 var _bursts: Array = []
 var _shake_strength: float = 0.0
 var _time: float = 0.0
+## Hard-drop streaks: {cells, rows, color, t, dur}
+var _trails: Array = []
+## Landing dust: {pos (px, board-local), vel, t, dur, color}
+var _dust: Array = []
+## 0..1, how close the stack is to the top (smoothed).
+var _danger: float = 0.0
+var show_piece_tags: bool = true
 
 @onready var _cells_layer: BoardLayer = $Cells
 @onready var _overlay_layer: BoardLayer = $Overlay
@@ -53,6 +60,7 @@ func _ready() -> void:
 	resized.connect(_recalc_geometry)
 	show_patterns = GameSettings.get_value("video", "color_patterns", false)
 	show_ghost = GameSettings.get_value("video", "show_ghost", true)
+	show_piece_tags = GameSettings.get_value("video", "piece_tags", true)
 	GameSettings.setting_changed.connect(_on_setting_changed)
 
 
@@ -142,6 +150,25 @@ func _process(delta: float) -> void:
 			if _bursts[i].t >= _bursts[i].dur:
 				_bursts.remove_at(i)
 		need_overlay = true
+	if not _trails.is_empty():
+		for i in range(_trails.size() - 1, -1, -1):
+			_trails[i].t += delta
+			if _trails[i].t >= _trails[i].dur:
+				_trails.remove_at(i)
+		need_overlay = true
+	if not _dust.is_empty():
+		for i in range(_dust.size() - 1, -1, -1):
+			var d: Dictionary = _dust[i]
+			d.t += delta
+			d.vel.y += cell_size * 14.0 * delta
+			d.pos += d.vel * delta
+			if d.t >= d.dur:
+				_dust.remove_at(i)
+		need_overlay = true
+	if sim:
+		_update_danger(delta)
+	if show_piece_tags and sim and sim.players.size() > 1:
+		need_overlay = true
 	if need_overlay:
 		_overlay_layer.queue_redraw()
 	_glow_layer.queue_redraw()  # glow pulses
@@ -184,13 +211,51 @@ func _on_piece_locked(_player_id: int, cells: Array[Vector2i]) -> void:
 	flash_cells(cells, 0.12)
 
 
-func _on_hard_drop(_player_id: int, rows: int) -> void:
+func _on_hard_drop(player_id: int, rows: int) -> void:
 	if rows > 2:
 		shake(minf(1.0 + rows * 0.15, 4.0))
+	var p := sim.get_player(player_id)
+	if p == null or p.active == null:
+		return
+	var cells := p.active.get_cells()
+	var col := player_color(player_id)
+	if rows > 0:
+		_trails.append({"cells": cells, "rows": rows, "color": col, "t": 0.0, "dur": 0.22})
+	# Dust puffs under the lowest cell of each column.
+	var lowest := {}
+	for c in cells:
+		if not lowest.has(c.x) or c.y > lowest[c.x]:
+			lowest[c.x] = c.y
+	var n := clampi(rows / 3 + 2, 2, 6)
+	for x: int in lowest:
+		var y: int = lowest[x]
+		if y < sim.board.hidden_rows:
+			continue
+		for k in n:
+			var base := Vector2((x + randf()) * cell_size, (y - sim.board.hidden_rows + 1) * cell_size)
+			var vel := Vector2(randf_range(-1.0, 1.0) * cell_size * 3.0, -randf_range(0.5, 2.0) * cell_size * 2.0)
+			_dust.append({"pos": base, "vel": vel, "t": 0.0, "dur": randf_range(0.25, 0.45), "color": col.lightened(0.4)})
 
 
 func _on_lines_cleared(result: LineClearResult) -> void:
 	shake(2.0 + result.line_count() * 1.5)
+
+
+func _update_danger(delta: float) -> void:
+	var b := sim.board
+	var max_h := 0
+	for x in b.width:
+		max_h = maxi(max_h, b.column_height(x))
+	var fill := float(max_h) / float(maxi(b.visible_height(), 1))
+	var target := clampf((fill - 0.65) / 0.3, 0.0, 1.0)
+	var before := _danger
+	_danger = lerpf(_danger, target, minf(1.0, delta * 4.0))
+	if _danger > 0.01 or before > 0.01:
+		queue_redraw()
+
+
+func danger_level() -> float:
+	return _danger
 
 
 func _on_board_effect(e: Dictionary) -> void:
@@ -250,12 +315,87 @@ func _draw_bursts(layer: CanvasItem) -> void:
 						layer.draw_rect(cell_rect(c.x, c.y), Color(col.r, col.g, col.b, 0.45 * k), true)
 
 
+func _draw_trails_and_dust(layer: CanvasItem) -> void:
+	var b := sim.board
+	for tr_: Dictionary in _trails:
+		var k: float = 1.0 - tr_.t / tr_.dur
+		var col: Color = tr_.color
+		var xs := {}
+		var top := {}
+		for c: Vector2i in tr_.cells:
+			if not top.has(c.x) or c.y < top[c.x]:
+				top[c.x] = c.y
+			xs[c.x] = true
+		for x: int in xs:
+			var y_end: int = top[x]
+			var y_start: int = maxi(b.hidden_rows, y_end - tr_.rows)
+			if y_end <= y_start:
+				continue
+			var r0 := cell_rect(x, y_start)
+			var r1 := cell_rect(x, y_end)
+			var h := r1.position.y - r0.position.y
+			var inset := cell_size * (0.15 + 0.25 * (1.0 - k))
+			var rect := Rect2(r0.position.x + inset, r0.position.y, cell_size - inset * 2.0, h)
+			layer.draw_rect(rect, Color(col.r, col.g, col.b, 0.28 * k), true)
+	var origin := board_origin + shake_offset
+	for d: Dictionary in _dust:
+		var a: float = 1.0 - d.t / d.dur
+		var s := maxf(1.5, cell_size * 0.16)
+		layer.draw_rect(Rect2(origin + d.pos - Vector2(s, s) * 0.5, Vector2(s, s)), Color(d.color.r, d.color.g, d.color.b, 0.8 * a), true)
+
+
+## Name tag above every falling piece so you can tell who is where; your
+## own piece gets a "YOU" marker.
+func _draw_piece_tags(layer: CanvasItem) -> void:
+	var font := get_theme_default_font()
+	var fs := clampi(int(cell_size * 0.55), 9, 16)
+	var b := sim.board
+	var placed: Array[Rect2] = []
+	for p in sim.players:
+		if p.active == null:
+			continue
+		var cells := p.active.get_cells()
+		var min_x := 9999
+		var max_x := -9999
+		var min_y := 9999
+		for c in cells:
+			min_x = mini(min_x, c.x)
+			max_x = maxi(max_x, c.x)
+			min_y = mini(min_y, c.y)
+		var mine := ghost_players.has(p.id)
+		var text := tr("HUD_YOU") if mine else p.display_name.get_slice(" (", 0).left(10)
+		var col := player_color(p.id).lightened(0.35)
+		var top := cell_rect(min_x, maxi(min_y, b.hidden_rows))
+		var center_x := (cell_rect(min_x, 0).position.x + cell_rect(max_x, 0).end.x) * 0.5
+		var tw := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x
+		var pos := Vector2(center_x - tw * 0.5, top.position.y - fs * 0.35)
+		# Stack tags that would overlap (pieces spawning next to each other).
+		var rect := Rect2(pos - Vector2(2, fs), Vector2(tw + 4, fs + 2))
+		for _i in 4:
+			var hit := false
+			for other in placed:
+				if other.intersects(rect):
+					hit = true
+					break
+			if not hit:
+				break
+			rect.position.y -= fs + 1
+		pos.y = rect.position.y + fs
+		placed.append(rect)
+		var alpha := 0.95 if mine else 0.7
+		layer.draw_string_outline(font, pos, text, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, maxi(3, fs / 3), Color(0.02, 0.03, 0.06, 0.85 * alpha))
+		layer.draw_string(font, pos, text, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, Color(col.r, col.g, col.b, alpha))
+
+
 func _on_setting_changed(section: String, key: String, value: Variant) -> void:
 	if section == "video" and key == "color_patterns":
 		show_patterns = value
 		_redraw_all()
 	elif section == "video" and key == "show_ghost":
 		show_ghost = value
+		_redraw_all()
+	elif section == "video" and key == "piece_tags":
+		show_piece_tags = value
 		_redraw_all()
 
 
@@ -277,6 +417,11 @@ func _draw() -> void:
 	var px := board_pixel_size()
 	var r := Rect2(board_origin + shake_offset, px)
 	draw_rect(r.grow(2.0), skin.board_border, true)
+	if _danger > 0.01:
+		# Pulsing red frame when the stack nears the top.
+		var pulse := 0.5 + 0.5 * sin(_time * (6.0 + 6.0 * _danger))
+		var w := 2.0 + 4.0 * _danger
+		draw_rect(r.grow(w), Color(1.0, 0.18, 0.15, (0.35 + 0.5 * pulse) * _danger), false, w)
 	draw_rect(r, skin.board_background, true)
 	if skin.grid_texture:
 		for y in sim.board.visible_height():
@@ -349,6 +494,9 @@ func draw_overlay_layer(layer: CanvasItem) -> void:
 				if bomb_tex:
 					layer.draw_texture_rect(bomb_tex, cell_rect(c.x, c.y), false, Color(1, 1, 1, 0.6 + 0.4 * pulse))
 	_draw_bursts(layer)
+	_draw_trails_and_dust(layer)
+	if show_piece_tags and sim.players.size() > 1:
+		_draw_piece_tags(layer)
 	# Lock flashes
 	for c: Vector2i in _flashes:
 		if c.y >= b.hidden_rows:

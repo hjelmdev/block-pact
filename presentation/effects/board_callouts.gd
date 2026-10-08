@@ -16,6 +16,7 @@ var setup: MatchSetup
 var local_players: Array[int] = []
 
 var _leader: int = -1
+var _active: Array[Label] = []
 var _banner: Label
 
 
@@ -102,7 +103,7 @@ func _on_board_effect(e: Dictionary) -> void:
 			_callout(o.x, o.y, "+%d" % e.amount, Color(1, 0.85, 0.25), 1.4)
 		"powerup":
 			var t := sim.get_powerup_type(e.amount)
-			if t:
+			if t and _is_local(e.player):
 				_callout(o.x, o.y - 1, tr("POWERUP_" + String(t.key).to_upper()) + "!",
 						board_view.player_color(e.player).lightened(0.4), 1.3)
 		"quake":
@@ -118,9 +119,14 @@ func _on_powerup_used(pid: int, powerup_id: int) -> void:
 	var pu_name := tr("POWERUP_" + String(t.key).to_upper())
 	if t.effect == PowerupType.Effect.RUSH:
 		_show_banner(tr("CALLOUT_RUSH") % p.display_name, col)
-	elif p.active:
+	elif p.active and _is_local(pid):
 		var c := p.active.get_cells()[0]
 		_callout(c.x, c.y + 2, pu_name + "!", col.lightened(0.4), 1.2)
+
+
+## Local humans, or everyone when only bots play (spectating / tests).
+func _is_local(pid: int) -> bool:
+	return local_players.is_empty() or local_players.has(pid)
 
 
 func _finisher_column(result: LineClearResult, fallback: int) -> int:
@@ -188,6 +194,20 @@ func _callout(x: int, y: int, text: String, color: Color, scale_mult: float) -> 
 	var bl := get_global_transform().affine_inverse() * (board_view.get_global_transform() * board_view.board_origin)
 	var bw := board_view.board_pixel_size().x
 	l.position.x = clampf(l.position.x, bl.x, bl.x + bw - l.size.x)
+	# Don't stack callouts on top of each other: move up until free.
+	var rect := Rect2(l.position, l.size)
+	for _i in 6:
+		var hit := false
+		for other: Label in _active:
+			if is_instance_valid(other) and Rect2(other.position, other.size).intersects(rect.grow(-2.0)):
+				hit = true
+				break
+		if not hit:
+			break
+		rect.position.y -= l.size.y * 0.9
+	l.position.y = rect.position.y
+	_active.append(l)
+	l.tree_exiting.connect(func(): _active.erase(l))
 	l.pivot_offset = l.size * 0.5
 	l.scale = Vector2.ONE * 0.6
 	var t := create_tween().set_parallel(true)

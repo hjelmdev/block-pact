@@ -6,6 +6,7 @@ func _build() -> void:
 	_slider("SETTINGS_MUSIC", "audio", "music")
 	_slider("SETTINGS_SFX", "audio", "sfx")
 	_check("SETTINGS_GHOST", "video", "show_ghost")
+	_check("SETTINGS_PIECE_TAGS", "video", "piece_tags")
 	_check("SETTINGS_SHAKE", "video", "screen_shake")
 	_check("SETTINGS_PARTICLES", "video", "particles")
 	_check("SETTINGS_PATTERNS", "video", "color_patterns")
