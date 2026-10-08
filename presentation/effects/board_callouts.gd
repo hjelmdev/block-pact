@@ -34,6 +34,8 @@ func bind_match(p_sim: MatchSimulation, p_setup: MatchSetup, controller: Node) -
 	local_players = controller.local_human_ids()
 	sim.lines_cleared.connect(_on_lines_cleared)
 	sim.score_changed.connect(_on_score_changed)
+	sim.board_effect.connect(_on_board_effect)
+	sim.powerup_used.connect(_on_powerup_used)
 
 
 func _competitive() -> bool:
@@ -74,10 +76,51 @@ func _on_lines_cleared(result: LineClearResult) -> void:
 		for cell: Dictionary in row.cells:
 			if cell.special > 0:
 				var t := sim.get_special_type(cell.special)
-				if t:
+				if t and t.is_multiplier():
 					var owner_col := board_view.player_color(cell.owner)
 					var pts: int = row.points.get(cell.owner, 0)
 					_callout(cell.x, row.y, "x%d  +%d" % [t.multiplier, pts], Color(1, 0.86, 0.3).lerp(owner_col, 0.25), 1.3)
+
+
+func _on_board_effect(e: Dictionary) -> void:
+	if board_view == null:
+		return
+	var o: Vector2i = e.origin
+	var col := board_view.player_color(e.owner)
+	var n: int = e.cells.size()
+	match String(e.key):
+		"bomb", "bomb_piece":
+			_callout(o.x, o.y, tr("CALLOUT_BOOM"), Color(1, 0.7, 0.3), 1.4)
+		"megabomb":
+			_callout(o.x, o.y, tr("CALLOUT_MEGABOOM"), Color(1, 0.5, 0.2), 1.7)
+		"laser":
+			_callout(o.x, o.y - 2, tr("CALLOUT_LASER"), Color(0.6, 0.95, 1.0), 1.3)
+		"paint":
+			if n > 0:
+				_callout(o.x, o.y - 1, tr("CALLOUT_PAINT") % n, col.lightened(0.3), 1.25)
+		"gold":
+			_callout(o.x, o.y, "+%d" % e.amount, Color(1, 0.85, 0.25), 1.4)
+		"powerup":
+			var t := sim.get_powerup_type(e.amount)
+			if t:
+				_callout(o.x, o.y - 1, tr("POWERUP_" + String(t.key).to_upper()) + "!",
+						board_view.player_color(e.player).lightened(0.4), 1.3)
+		"quake":
+			_show_banner(tr("CALLOUT_QUAKE"), Color(1, 0.75, 0.4))
+
+
+func _on_powerup_used(pid: int, powerup_id: int) -> void:
+	var t := sim.get_powerup_type(powerup_id)
+	var p := sim.get_player(pid)
+	if t == null or p == null:
+		return
+	var col := board_view.player_color(pid)
+	var pu_name := tr("POWERUP_" + String(t.key).to_upper())
+	if t.effect == PowerupType.Effect.RUSH:
+		_show_banner(tr("CALLOUT_RUSH") % p.display_name, col)
+	elif p.active:
+		var c := p.active.get_cells()[0]
+		_callout(c.x, c.y + 2, pu_name + "!", col.lightened(0.4), 1.2)
 
 
 func _finisher_column(result: LineClearResult, fallback: int) -> int:

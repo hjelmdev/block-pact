@@ -115,3 +115,25 @@ ONLINE_TITLE,Online,Online
 ONLINE_VERSION_MISMATCH,Different game version – reload the page.,Olika spelversioner – ladda om sidan.
 ONLINE_WAITING_FOR,Waiting for %s…,Väntar på %s…
 ONLINE_WAITING_HOST,Waiting for the host…,Väntar på hosten…
+CALLOUT_BOOM,BOOM!,BOOM!
+CALLOUT_MEGABOOM,MEGA BOOM!,MEGABOOM!
+CALLOUT_LASER,LASER!,LASER!
+CALLOUT_PAINT,PAINTED %d!,MÅLADE %d!
+CALLOUT_QUAKE,QUAKE!,JORDBÄVNING!
+CALLOUT_RUSH,%s: RUSH! Everyone else speeds up,%s: RUSH! Alla andra faller snabbare
+POWERUP_BOMB,Bomb,Bomb
+POWERUP_SLOW,Slow,Slow-mo
+POWERUP_DOUBLE,Double,Dubbla poäng
+POWERUP_QUAKE,Quake,Jordbävning
+POWERUP_RUSH,Rush,Rush
+POWERUP_BOMB_DESC,Your piece explodes when it lands,Din kloss sprängs när den landar
+POWERUP_SLOW_DESC,Your pieces fall 3x slower,Dina klossar faller 3x långsammare
+POWERUP_DOUBLE_DESC,Your line points are doubled,Dina radpoäng dubblas
+POWERUP_QUAKE_DESC,Blocks fall down into holes,Blocken faller ner i hålen
+POWERUP_RUSH_DESC,Everyone else falls 3x faster,Alla andra faller 3x snabbare
+HUD_POWER_KEY,Power,Power
+LOBBY_SPECIALS,Special blocks,Specialblock
+LOBBY_SPECIALS_MODE,Mode default,Lägets standard
+LOBBY_SPECIALS_ALL,All (bombs/laser/paint/gold),Alla (bomb/laser/färg/guld)
+LOBBY_SPECIALS_OFF,Off,Av
+LOBBY_POWERUPS,Powerups,Powerups

@@ -18,9 +18,13 @@ func _ready() -> void:
 		_buttons.append(b)
 
 
-func bind_match(_sim: MatchSimulation, _setup: MatchSetup, controller: Node) -> void:
+func bind_match(sim: MatchSimulation, _setup: MatchSetup, controller: Node) -> void:
 	source = controller.get_touch_source()
 	visible = source != null and Platform.want_touch_controls()
+	var power := get_node_or_null(^"%Power") as Control
+	if power:
+		power.visible = sim.powerups_enabled()
+		(power.get_parent() as GridContainer).columns = 3 if power.visible else 2
 
 
 func _input(event: InputEvent) -> void:
@@ -73,7 +77,7 @@ func _press(index: int, b: TouchButton) -> void:
 		pause_requested.emit()
 		return
 	source.set_held(b.command, true)
-	if b.command in [InputCommand.ROTATE_CW, InputCommand.ROTATE_CCW, InputCommand.HARD_DROP]:
+	if b.command in [InputCommand.ROTATE_CW, InputCommand.ROTATE_CCW, InputCommand.HARD_DROP, InputCommand.USE_POWER]:
 		Input.vibrate_handheld(15)
 
 

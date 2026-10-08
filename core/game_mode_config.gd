@@ -39,6 +39,16 @@ enum TeamMode {
 @export_range(0.1, 1.0) var spawn_spread: float = 0.6
 @export_range(0.0, 1.0) var special_chance: float = 0.12
 @export var special_types: Array[SpecialBlockType] = []
+## Lobby option: "" = the mode's own specials, "off" = none, or the name of a
+## SpecialSet in res://data/specials/sets/ (e.g. "all").
+@export var special_preset: String = ""
+
+@export_group("Powerups")
+@export var powerups_enabled: bool = false
+## Empty = every PowerupType in res://data/powerups/.
+@export var powerup_types: Array[PowerupType] = []
+## Chance that a piece carries a powerup cell (when powerups are enabled).
+@export_range(0.0, 1.0) var powerup_cell_chance: float = 0.1
 
 @export_group("Speed")
 @export var start_level: int = 1

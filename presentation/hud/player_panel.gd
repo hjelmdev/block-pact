@@ -13,6 +13,10 @@ var _target_score: int = 0
 var _color: Color = Color.WHITE
 var _popup_tween: Tween
 var _wants_previews := true
+var _power_row: HBoxContainer
+var _power_icon: TextureRect
+var _power_label: Label
+var _shown_powerup: int = -1
 
 @onready var _swatch: ColorRect = %Swatch
 @onready var _name: Label = %NameLabel
@@ -52,6 +56,61 @@ func setup_panel(p_sim: MatchSimulation, p_player_id: int, color: Color, show_pr
 	sim.piece_held.connect(_on_piece_changed)
 	_refresh_previews()
 	_update_info(0)
+	if sim.powerups_enabled():
+		_build_power_row()
+		sim.powerup_changed.connect(func(pid, _id):
+			if pid == player_id:
+				_flash_power())
+
+
+func _build_power_row() -> void:
+	_power_row = HBoxContainer.new()
+	_power_row.add_theme_constant_override(&"separation", 6)
+	_power_icon = TextureRect.new()
+	_power_icon.custom_minimum_size = Vector2(22, 22)
+	_power_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_power_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	_power_icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	_power_label = Label.new()
+	_power_label.add_theme_font_size_override(&"font_size", 12)
+	_power_label.add_theme_color_override(&"font_color", Color(0.85, 0.88, 1.0))
+	_power_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_power_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	_power_row.add_child(_power_icon)
+	_power_row.add_child(_power_label)
+	$VBox.add_child(_power_row)
+	$VBox.move_child(_power_row, _info.get_index() + 1)
+
+
+func _flash_power() -> void:
+	if _power_icon == null:
+		return
+	_power_icon.pivot_offset = _power_icon.size * 0.5
+	var t := create_tween()
+	t.tween_property(_power_icon, "scale", Vector2.ONE * 1.6, 0.08)
+	t.tween_property(_power_icon, "scale", Vector2.ONE, 0.2)
+
+
+func _update_power_row() -> void:
+	var p := sim.get_player(player_id)
+	var held := sim.get_powerup_type(p.powerup)
+	if p.powerup != _shown_powerup:
+		_shown_powerup = p.powerup
+		_power_icon.texture = (held.icon if held.icon else Assets.icon(StringName("pu_" + String(held.key)))) if held else null
+		_power_icon.modulate = Color.WHITE if held else Color(1, 1, 1, 0.2)
+	var parts: PackedStringArray = []
+	if held and not compact:
+		parts.append(tr("POWERUP_" + String(held.key).to_upper()))
+	if p.bomb_armed or (p.active and p.active.bomb):
+		parts.append(tr("POWERUP_BOMB"))
+	if p.slow_ticks > 0:
+		parts.append("%s %ds" % [tr("POWERUP_SLOW"), ceili(p.slow_ticks / 60.0)])
+	if p.double_ticks > 0:
+		parts.append("x2 %ds" % ceili(p.double_ticks / 60.0))
+	if p.rush_ticks > 0:
+		parts.append("%s %ds" % [tr("POWERUP_RUSH"), ceili(p.rush_ticks / 60.0)])
+	_power_label.text = " · ".join(parts)
+	_power_label.add_theme_color_override(&"font_color", Color(1, 0.55, 0.45) if p.rush_ticks > 0 else Color(0.85, 0.88, 1.0))
 
 
 func set_compact(value: bool) -> void:
@@ -99,6 +158,8 @@ func show_popup(points: int, multiplier: int) -> void:
 
 
 func _process(delta: float) -> void:
+	if _power_row and sim:
+		_update_power_row()
 	if absf(_shown_score - _target_score) > 0.5:
 		_shown_score = lerpf(_shown_score, _target_score, minf(1.0, delta * count_up_speed))
 		if absf(_shown_score - _target_score) < 1.0:

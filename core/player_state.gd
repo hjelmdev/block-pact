@@ -17,6 +17,18 @@ var max_combo: int = 0
 var pieces_placed: int = 0
 var specials_triggered: int = 0
 var best_clear: int = 0
+var powerups_used: int = 0
+var blocks_destroyed: int = 0
+var blocks_painted: int = 0
+
+# Powerups
+## Held PowerupType id (0 = none).
+var powerup: int = 0
+var slow_ticks: int = 0
+var double_ticks: int = 0
+var rush_ticks: int = 0
+## The next spawned piece becomes a bomb.
+var bomb_armed: bool = false
 
 var bag: PieceBag
 var queue: Array[PieceShape] = []

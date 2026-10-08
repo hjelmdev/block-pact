@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="PowerupType" format=3]
+
+[ext_resource type="Script" path="res://core/powerup_type.gd" id="1_pu"]
+
+[resource]
+script = ExtResource("1_pu")
+id = 2
+key = &"slow"
+effect = 1
+duration_ticks = 600
+spawn_weight = 1.0

@@ -10,9 +10,15 @@
 [ext_resource type="Texture2D" path="res://ui/icons/hold.png" id="8_i7atb"]
 [ext_resource type="Texture2D" path="res://ui/icons/pause.png" id="9_1rhnx"]
 [ext_resource type="Resource" path="res://skins/default/default_palette.tres" id="10_ajeqo"]
+[ext_resource type="Texture2D" path="res://ui/icons/power.png" id="10_lnnh6"]
+[ext_resource type="Texture2D" path="res://ui/icons/pu_bomb.png" id="11_i7atb"]
 [ext_resource type="Script" path="res://config/game_assets.gd" id="11_t6e6q"]
+[ext_resource type="Texture2D" path="res://ui/icons/pu_slow.png" id="12_1rhnx"]
 [ext_resource type="Resource" path="res://audio/default_sound_library.tres" id="12_s66o8"]
+[ext_resource type="Texture2D" path="res://ui/icons/pu_double.png" id="13_ajeqo"]
 [ext_resource type="Theme" path="res://ui/theme/main_theme.tres" id="13_fr4fs"]
+[ext_resource type="Texture2D" path="res://ui/icons/pu_quake.png" id="14_t6e6q"]
+[ext_resource type="Texture2D" path="res://ui/icons/pu_rush.png" id="15_s66o8"]
 
 [resource]
 script = ExtResource("11_t6e6q")
@@ -26,6 +32,12 @@ icons = {
 &"hold": ExtResource("8_i7atb"),
 &"left": ExtResource("2_rlcqf"),
 &"pause": ExtResource("9_1rhnx"),
+&"power": ExtResource("10_lnnh6"),
+&"pu_bomb": ExtResource("11_i7atb"),
+&"pu_double": ExtResource("13_ajeqo"),
+&"pu_quake": ExtResource("14_t6e6q"),
+&"pu_rush": ExtResource("15_s66o8"),
+&"pu_slow": ExtResource("12_1rhnx"),
 &"right": ExtResource("3_5x7i0"),
 &"rotate_ccw": ExtResource("7_lnnh6"),
 &"rotate_cw": ExtResource("6_bbo5g")

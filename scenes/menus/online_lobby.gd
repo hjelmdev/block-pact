@@ -4,7 +4,7 @@ extends MenuPage
 
 var _title: Label
 var _mode: OptionButton
-var _collision: CheckButton
+var _options: MatchOptions
 var _players: VBoxContainer
 var _add_bot: Button
 var _start: Button
@@ -24,9 +24,9 @@ func _build() -> void:
 	_mode.item_selected.connect(func(i): Net.host_set_mode(String(_modes[i].mode_id)))
 	add_row(tr("LEADERBOARD_MODE"), _mode)
 
-	_collision = CheckButton.new()
-	_collision.toggled.connect(func(v): Net.host_set_collision(v))
-	add_row(tr("LOBBY_COLLISION"), _collision)
+	_options = MatchOptions.new()
+	content.add_child(_options)
+	_options.options_changed.connect(func(o): Net.host_set_options(o))
 
 	_players = VBoxContainer.new()
 	_players.add_theme_constant_override(&"separation", 6)
@@ -47,7 +47,7 @@ func _refresh() -> void:
 	var lobby := Net.lobby
 	var host := Net.is_host
 	_mode.disabled = not host
-	_collision.disabled = not host
+	_options.set_editable(host)
 	_add_bot.visible = host
 	_start.visible = host
 	if lobby.is_empty():
@@ -56,7 +56,7 @@ func _refresh() -> void:
 	for i in _modes.size():
 		if String(_modes[i].mode_id) == lobby.get("mode_id", ""):
 			_mode.select(i)
-	_collision.set_pressed_no_signal(lobby.get("collision", false))
+	_options.set_options(lobby.get("options", {}))
 	for c in _players.get_children():
 		c.queue_free()
 	var palette := Assets.palette()

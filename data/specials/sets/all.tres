@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="SpecialSet" format=3]
+
+[ext_resource type="Script" path="res://core/special_set.gd" id="1_set"]
+[ext_resource type="Script" path="res://core/special_block_type.gd" id="10_sbt"]
+[ext_resource type="Resource" path="res://data/specials/x2.tres" id="2_x2"]
+[ext_resource type="Resource" path="res://data/specials/x3.tres" id="3_x3"]
+[ext_resource type="Resource" path="res://data/specials/x5.tres" id="4_x5"]
+[ext_resource type="Resource" path="res://data/specials/bomb.tres" id="5_bomb"]
+[ext_resource type="Resource" path="res://data/specials/megabomb.tres" id="6_mega"]
+[ext_resource type="Resource" path="res://data/specials/laser.tres" id="7_laser"]
+[ext_resource type="Resource" path="res://data/specials/paint.tres" id="8_paint"]
+[ext_resource type="Resource" path="res://data/specials/gold.tres" id="9_gold"]
+
+[resource]
+script = ExtResource("1_set")
+types = Array[ExtResource("10_sbt")]([ExtResource("2_x2"), ExtResource("3_x3"), ExtResource("4_x5"), ExtResource("5_bomb"), ExtResource("6_mega"), ExtResource("7_laser"), ExtResource("8_paint"), ExtResource("9_gold")])
+chance = 0.2

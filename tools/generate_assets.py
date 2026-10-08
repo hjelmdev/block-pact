@@ -184,6 +184,277 @@ def icons():
 
 
 # --------------------------------------------------------------------------
+# Special cells + powerups (pixel art, 16x16). Characters map to colors;
+# '.' is transparent. Special overlays sit on top of the player-colored block.
+
+PIX = {
+    "#": (12, 10, 22, 235), "w": (255, 255, 255, 255), "l": (200, 205, 220, 255),
+    "d": (70, 72, 90, 255), "k": (32, 32, 44, 255), "y": (255, 220, 70, 255),
+    "o": (255, 150, 40, 255), "r": (240, 60, 60, 255), "c": (110, 235, 255, 255),
+    "b": (60, 140, 255, 255), "g": (255, 200, 40, 255), "G": (190, 130, 20, 255),
+    "p": (240, 90, 220, 255), "v": (150, 90, 255, 255), "e": (90, 230, 120, 255),
+}
+
+ART = {
+    "bomb": [
+        "................",
+        "...........y....",
+        "..........yoy...",
+        ".........#.y....",
+        "........#.......",
+        ".....####.......",
+        "....#kkkk#......",
+        "...#kkwkkk#.....",
+        "...#kwkkkk#.....",
+        "...#kkkkkk#.....",
+        "...#kkkkkk#.....",
+        "....#kkkk#......",
+        ".....####.......",
+        "................",
+        "................",
+        "................",
+    ],
+    "megabomb": [
+        "............y...",
+        "...........yoy..",
+        "..........#.y...",
+        ".........#......",
+        "....######......",
+        "...#kkkkkk#.....",
+        "..#kkwwkkkk#....",
+        "..#kwkkkkkk#....",
+        "..#kkkrrkkk#....",
+        "..#kkrrrrkk#....",
+        "..#kkkrrkkk#....",
+        "..#kkkkkkkk#....",
+        "...#kkkkkk#.....",
+        "....######......",
+        "................",
+        "................",
+    ],
+    "laser": [
+        "......#cc#......",
+        "......#ww#......",
+        "......#cc#......",
+        "......#ww#......",
+        "....##cwwc##....",
+        "...#ccwwwwcc#...",
+        "..#cwwwwwwwwc#..",
+        "..#cwwwwwwwwc#..",
+        "...#ccwwwwcc#...",
+        "....##cwwc##....",
+        "......#ww#......",
+        "......#cc#......",
+        "......#ww#......",
+        "......#cc#......",
+        "................",
+        "................",
+    ],
+    "paint": [
+        "................",
+        ".......##.......",
+        "......#pp#......",
+        ".....#pppp#.....",
+        "....#ppwppp#....",
+        "...#ppwppppp#...",
+        "...#pppppppp#...",
+        "..#pppppppppp#..",
+        "..#ppppppppvp#..",
+        "..#pppppppvvp#..",
+        "...#pppppvvp#...",
+        "....#pppppp#....",
+        ".....######.....",
+        "................",
+        "................",
+        "................",
+    ],
+    "gold": [
+        "................",
+        ".....######.....",
+        "....#gggggg#....",
+        "...#ggwwgggG#...",
+        "..#ggwggGgggG#..",
+        "..#gwggGGGggG#..",
+        "..#gggGgggggG#..",
+        "..#gggGGGgggG#..",
+        "..#gggggGgggG#..",
+        "..#gggGGGgggG#..",
+        "...#gggGggGG#...",
+        "....#GGGGGG#....",
+        ".....######.....",
+        "................",
+        "................",
+        "................",
+    ],
+    "powerup": [
+        "................",
+        "...##########...",
+        "..#eeeeeeeeee#..",
+        "..#ewwwwwwwwe#..",
+        "..#ew##ww##we#..",
+        "..#ewwwww##we#..",
+        "..#ewwww##wwe#..",
+        "..#ewww##wwwe#..",
+        "..#ewwwwwwwwe#..",
+        "..#ewww##wwwe#..",
+        "..#ewwwwwwwwe#..",
+        "..#eeeeeeeeee#..",
+        "...##########...",
+        "................",
+        "................",
+        "................",
+    ],
+}
+
+# UI icons for powerups (drawn white-ish with color; 16x16 scaled to 64).
+ICON_ART = {
+    "pu_bomb": ART["bomb"],
+    "pu_slow": [
+        "................",
+        "...##########...",
+        "...#llllllll#...",
+        "....#cccccc#....",
+        ".....#cccc#.....",
+        "......#cc#......",
+        ".......##.......",
+        "......#..#......",
+        ".....#....#.....",
+        "....#..cc..#....",
+        "...#..cccc..#...",
+        "...#cccccccc#...",
+        "...#llllllll#...",
+        "...##########...",
+        "................",
+        "................",
+    ],
+    "pu_double": [
+        "................",
+        "................",
+        "..#.#...####....",
+        "..#.#..#....#...",
+        "...#........#...",
+        "..#.#......#....",
+        "..#.#.....#.....",
+        "........#.......",
+        ".......#........",
+        ".......######...",
+        "................",
+        "................",
+        "................",
+        "................",
+        "................",
+        "................",
+    ],
+    "pu_quake": [
+        "................",
+        "................",
+        "..o.............",
+        "..oo......o.....",
+        "..o.o....oo.....",
+        "..o..o..o.o.....",
+        "..o...oo..o..o..",
+        "..o.......o.oo..",
+        "..o........oo...",
+        "................",
+        "..##.##.##.##...",
+        "..#d##d##d##d#..",
+        "..############..",
+        "................",
+        "................",
+        "................",
+    ],
+    "pu_rush": [
+        "................",
+        "....r......r....",
+        "....rr....rr....",
+        ".....rr..rr.....",
+        "......rrrr......",
+        ".......rr.......",
+        "....r......r....",
+        "....rr....rr....",
+        ".....rr..rr.....",
+        "......rrrr......",
+        ".......rr.......",
+        "................",
+        "....########....",
+        "................",
+        "................",
+        "................",
+    ],
+    "power": [
+        "................",
+        ".........yy.....",
+        "........yy......",
+        ".......yy.......",
+        "......yy........",
+        ".....yyyyyy.....",
+        "........yy......",
+        ".......yy.......",
+        "......yy........",
+        ".....yy.........",
+        "....yy..........",
+        "................",
+        "................",
+        "................",
+        "................",
+        "................",
+    ],
+}
+
+
+def _render_art(rows, scale=1):
+    n = len(rows)
+    img = np.zeros((n, n, 4), dtype=np.uint8)
+    for y, row in enumerate(rows):
+        for x, ch in enumerate(row[:n]):
+            if ch in PIX:
+                img[y, x] = PIX[ch]
+    im = Image.fromarray(img, "RGBA")
+    if scale != 1:
+        im = im.resize((n * scale, n * scale), Image.NEAREST)
+    return im
+
+
+def _outline_white(rows):
+    # The double icon is drawn with '#' strokes; render them white.
+    return [r.replace("#", "w") for r in rows]
+
+
+def special_art():
+    for name, rows in ART.items():
+        _render_art(rows).save(os.path.join(TEX, f"special_{name}.png"))
+    os.makedirs(ICONS, exist_ok=True)
+    for name, rows in ICON_ART.items():
+        if name == "pu_double":
+            rows = _outline_white(rows)
+        _render_art(rows, 4).save(os.path.join(ICONS, f"{name}.png"))
+
+
+def fx_sfx():
+    os.makedirs(SFX, exist_ok=True)
+    w = lambda name, s, v=0.6: write(os.path.join(SFX, f"{name}.wav"), s, v)
+    boom_n = int(RATE * 0.55)
+    boom = noise(0.55, 11) * env(boom_n, 0.001, 0.95)
+    low = osc(90, 0.55, "sine", sweep_to=30) * env(boom_n, 0.001, 0.9)
+    w("explosion", mix(boom * 0.8, low), 0.8)
+    big_n = int(RATE * 0.9)
+    w("megabomb", mix(noise(0.9, 12) * env(big_n, 0.001, 0.97), osc(70, 0.9, "sine", sweep_to=20) * env(big_n, 0.001, 0.95) * 1.2), 0.85)
+    zap = osc(2400, 0.35, "saw", sweep_to=200) * env(int(RATE * 0.35), 0.001, 0.8)
+    w("laser", mix(zap, osc(1200, 0.35, "square", 0.1, sweep_to=100) * env(int(RATE * 0.35), 0.001, 0.8) * 0.5), 0.5)
+    splash = noise(0.3, 13) * env(int(RATE * 0.3), 0.01, 0.9)
+    w("paint", mix(splash * 0.5, seq([tone(n_, 0.05, "tri") for n_ in (79, 76, 83, 88)])), 0.5)
+    w("gold", seq([tone(95, 0.05, "square", 0.25), tone(100, 0.25, "square", 0.25, 0.8)]), 0.45)
+    w("powerup_get", seq([tone(n_, 0.04, "square", 0.25) for n_ in (72, 79, 84, 91)] + [tone(96, 0.2, "tri", rel=0.8)]), 0.5)
+    w("powerup_use", mix(osc(300, 0.3, "square", 0.25, sweep_to=1500) * env(int(RATE * 0.3), 0.002, 0.7), noise(0.3, 14) * env(int(RATE * 0.3), 0.01, 0.9) * 0.2), 0.45)
+    rum_n = int(RATE * 0.8)
+    t = np.arange(rum_n) / RATE
+    rum = noise(0.8, 15) * env(rum_n, 0.02, 0.9) * (0.6 + 0.4 * np.sin(2 * math.pi * 9 * t))
+    w("quake", mix(rum, osc(55, 0.8, "sine") * env(rum_n, 0.02, 0.9)), 0.75)
+    w("slow", seq([tone(n_, 0.12, "tri") for n_ in (79, 74, 67)]), 0.45)
+    w("rush", seq([tone(n_, 0.035, "square", 0.25) for n_ in (60, 67, 72, 79, 84, 91, 96)]), 0.45)
+
+
+# --------------------------------------------------------------------------
 # Sound
 
 def env(n, attack=0.005, release=0.5):
@@ -335,6 +606,10 @@ if __name__ == "__main__":
     import sys
     for d in (TEX, PAT, SFX, MUSIC):
         os.makedirs(d, exist_ok=True)
+    if "--fx-only" in sys.argv:
+        special_art()
+        fx_sfx()
+        sys.exit(0)
     only_sfx = "--sfx-only" in sys.argv
     if not only_sfx:
         block_base(); glow(); ghost(); cell_bg(); particle(); patterns()

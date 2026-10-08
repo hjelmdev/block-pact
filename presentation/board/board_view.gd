@@ -32,6 +32,8 @@ var board_origin: Vector2 = Vector2.ZERO
 var shake_offset: Vector2 = Vector2.ZERO
 
 var _flashes: Dictionary = {}  # Vector2i -> time left (sec)
+## Board effects being animated: {kind, cells, color, t, dur, origin}
+var _bursts: Array = []
 var _shake_strength: float = 0.0
 var _time: float = 0.0
 
@@ -65,6 +67,7 @@ func bind_match(p_sim: MatchSimulation, p_setup: MatchSetup, _controller: Node) 
 	sim.piece_locked.connect(_on_piece_locked)
 	sim.piece_hard_dropped.connect(_on_hard_drop)
 	sim.lines_cleared.connect(_on_lines_cleared)
+	sim.board_effect.connect(_on_board_effect)
 	_recalc_geometry()
 	_redraw_all()
 
@@ -133,9 +136,20 @@ func _process(delta: float) -> void:
 	elif shake_offset != Vector2.ZERO:
 		shake_offset = Vector2.ZERO
 		_redraw_all()
+	if not _bursts.is_empty():
+		for i in range(_bursts.size() - 1, -1, -1):
+			_bursts[i].t += delta
+			if _bursts[i].t >= _bursts[i].dur:
+				_bursts.remove_at(i)
+		need_overlay = true
 	if need_overlay:
 		_overlay_layer.queue_redraw()
 	_glow_layer.queue_redraw()  # glow pulses
+	if sim:
+		for p in sim.players:
+			if p.active and p.active.bomb:
+				_overlay_layer.queue_redraw()
+				break
 	_meters_layer.queue_redraw()
 
 
@@ -177,6 +191,63 @@ func _on_hard_drop(_player_id: int, rows: int) -> void:
 
 func _on_lines_cleared(result: LineClearResult) -> void:
 	shake(2.0 + result.line_count() * 1.5)
+
+
+func _on_board_effect(e: Dictionary) -> void:
+	var col := player_color(e.owner) if e.owner >= 0 else Color.WHITE
+	var cells: Array = e.cells
+	match String(e.key):
+		"bomb", "bomb_piece":
+			_add_burst(&"blast", cells, Color(1.0, 0.65, 0.2), 0.45, e.origin)
+			shake(5.0)
+		"megabomb":
+			_add_burst(&"blast", cells, Color(1.0, 0.4, 0.15), 0.6, e.origin)
+			shake(8.0)
+		"laser":
+			_add_burst(&"beam", cells, Color(0.55, 0.95, 1.0), 0.5, e.origin)
+			shake(3.0)
+		"paint":
+			_add_burst(&"paint", cells, col, 0.6, e.origin)
+		"quake":
+			_add_burst(&"quake", cells, Color(1.0, 0.8, 0.5), 0.6, e.origin)
+			shake(9.0)
+
+
+func _add_burst(kind: StringName, cells: Array, color: Color, dur: float, origin: Vector2i) -> void:
+	_bursts.append({"kind": kind, "cells": cells.duplicate(), "color": color, "t": 0.0, "dur": dur, "origin": origin})
+
+
+func _draw_bursts(layer: CanvasItem) -> void:
+	var b := sim.board
+	for burst: Dictionary in _bursts:
+		var k: float = 1.0 - burst.t / burst.dur
+		var col: Color = burst.color
+		match String(burst.kind):
+			"blast":
+				# Expanding ring + fading hot cells.
+				var center := cell_rect(burst.origin.x, burst.origin.y).get_center()
+				var r := cell_size * (0.8 + 3.5 * (1.0 - k))
+				layer.draw_arc(center, r, 0.0, TAU, 32, Color(col.r, col.g, col.b, 0.8 * k), maxf(2.0, cell_size * 0.35 * k), true)
+				for c: Vector2i in burst.cells:
+					if c.y >= b.hidden_rows:
+						layer.draw_rect(cell_rect(c.x, c.y).grow(-cell_size * 0.1 * (1.0 - k)), Color(1, 0.95, 0.7, 0.85 * k), true)
+			"beam":
+				var x: int = burst.origin.x
+				var top := cell_rect(x, b.hidden_rows).position
+				var w := cell_size * (0.3 + 0.9 * k)
+				var rect := Rect2(top.x + (cell_size - w) * 0.5, top.y, w, cell_size * b.visible_height())
+				layer.draw_rect(rect, Color(col.r, col.g, col.b, 0.75 * k), true)
+				layer.draw_rect(rect.grow_individual(-w * 0.3, 0, -w * 0.3, 0), Color(1, 1, 1, 0.9 * k), true)
+			"paint":
+				for c: Vector2i in burst.cells:
+					if c.y >= b.hidden_rows:
+						var rr := cell_rect(c.x, c.y)
+						layer.draw_rect(rr, Color(col.r, col.g, col.b, 0.75 * k), true)
+						layer.draw_rect(rr, Color(1, 1, 1, 0.6 * k), false, 2.0)
+			"quake":
+				for c: Vector2i in burst.cells:
+					if c.y >= b.hidden_rows:
+						layer.draw_rect(cell_rect(c.x, c.y), Color(col.r, col.g, col.b, 0.45 * k), true)
 
 
 func _on_setting_changed(section: String, key: String, value: Variant) -> void:
@@ -266,6 +337,18 @@ func draw_overlay_layer(layer: CanvasItem) -> void:
 			var c := cells[idx]
 			if c.y >= b.hidden_rows:
 				_draw_cell_decor(layer, c.x, c.y, p.id, p.active.special_at_index(idx))
+	# Bomb pieces: pulsing glyph on every cell.
+	var bomb_tex := skin.get_special_overlay(&"bomb_piece")
+	for p in sim.players:
+		if p.active == null or not p.active.bomb:
+			continue
+		var pulse := 0.55 + 0.45 * sin(_time * 12.0)
+		for c in p.active.get_cells():
+			if c.y >= b.hidden_rows:
+				layer.draw_rect(cell_rect(c.x, c.y), Color(1, 0.3, 0.15, 0.35 * pulse), true)
+				if bomb_tex:
+					layer.draw_texture_rect(bomb_tex, cell_rect(c.x, c.y), false, Color(1, 1, 1, 0.6 + 0.4 * pulse))
+	_draw_bursts(layer)
 	# Lock flashes
 	for c: Vector2i in _flashes:
 		if c.y >= b.hidden_rows:

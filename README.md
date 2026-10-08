@@ -48,6 +48,10 @@ Blocktexturen är en *gråskalekarta* som shadern färgar med spelarens färg: 0
 
 Platshållarna genereras av `tools/generate_assets.py` och `tools/build_asset_resources.gd`. Du behöver aldrig köra dem igen om du byter till egna assets.
 
+## Specialblock och powerups
+
+I lobbyn väljer du *Specialblock* (lägets egna, alla eller av) och *Powerups*. Specialblock utlöses när raden de ligger i rensas: x2/x3/x5, bomb, megabomb, laser, färg (stjäl block), guld och powerup-block. Powerups aktiveras med **V** (eller F/Enter), **R** för vänster spelare, **Enter** för höger spelare, **Y** på gamepad och blixtknappen på touch. Nya typer läggs till som `.tres` i `data/specials/` och `data/powerups/`.
+
 ## Bottar som lär sig
 
 Varje bot har en **svårighetsgrad** (hur bra och snabbt den spelar) och en **personlighet** (vad den vill): Byggare, Tjuv, Girig eller Sabotör. Båda väljs i lobbyn. Personligheterna är `.tres`-filer i `data/bots/`, så du kan justera dem eller lägga till nya utan kod.

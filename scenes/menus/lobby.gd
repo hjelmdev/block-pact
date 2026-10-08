@@ -12,7 +12,7 @@ const SLOT_ROW := preload("res://scenes/menus/slot_row.tscn")
 @onready var _start: Button = %StartButton
 @onready var _back: Button = %BackButton
 @onready var _info: Label = %InfoLabel
-@onready var _collision: CheckButton = %CollisionCheck
+@onready var _options: MatchOptions = %MatchOptions
 
 var _modes: Array[GameModeConfig] = []
 var _seats: Array[PlayerSlot] = []
@@ -36,8 +36,6 @@ func _ready() -> void:
 		_seats.append(p2)
 	else:
 		_seats.append(MatchFactory.bot_slot(1, &"normal"))
-	_collision.button_pressed = GameSettings.get_value("game", "piece_collision", false)
-	_collision.toggled.connect(func(v): GameSettings.set_value("game", "piece_collision", v))
 	_mode.select(0)
 	_on_mode_changed()
 	_start.grab_focus()
@@ -131,5 +129,5 @@ func _on_start() -> void:
 	for s in _seats:
 		slots.append(s.duplicate())
 	setup.slots = slots
-	setup.rule_overrides = {"active_piece_collision": _collision.button_pressed}
+	setup.rule_overrides = MatchOptions.to_rule_overrides(_options.get_options())
 	Router.goto(&"match", {"setup": setup})

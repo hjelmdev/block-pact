@@ -55,6 +55,14 @@ Keyboard / Joypad / Touch / Bot / (Network) → InputSource.gather(tick) → int
 - **Placering (#1–#8)** och en guldram för ledaren i spelarpanelerna.
 - **Bot-personligheter** (`data/bots/*.tres`, `BotPersonality`) läggs ovanpå svårighetsgraden: *Byggare*, *Tjuv* (avslutar andras rader, `w_steal`), *Girig* (egna rader och x5) och *Sabotör* (täcker luckor i andras rader, `w_sabotage`).
 
+## Specialblock och powerups
+
+- **Specialblock** (`SpecialBlockType`, `data/specials/`) utlöses när raden de ligger i rensas: *x2/x3/x5* (multiplikator), *Bomb* (3×3), *Megabomb* (5×5), *Laser* (hela kolumnen), *Färg* (målar om 3×3 i ägarens färg), *Guld* (fast bonus till den som slutför raden) och *Powerup* (den som slutför raden får en powerup). Effekten påverkar bara rader som inte rensas, och körs innan raderna faller ihop (`MatchSimulation._apply_special_effects`).
+- **Uppsättningar** (`SpecialSet`, `data/specials/sets/`): lobbyvalet *Specialblock* väljer lägets egna, `all` eller `off` via `GameModeConfig.special_preset`.
+- **Powerups** (`PowerupType`, `data/powerups/`): man håller en åt gången och aktiverar med `InputCommand.USE_POWER` (V/F/Enter, R för vänster spelare, Enter för höger, Y på gamepad, blixtknappen på touch). *Bomb* (din kloss sprängs när den landar), *Slow-mo* (3× långsammare fall), *Dubbla poäng*, *Jordbävning* (blocken faller ner i hålen, hela rader rensas åt dig) och *Rush* (alla andra faller 3× snabbare).
+- Allt går genom simuleringen och är deterministiskt, så det fungerar online. Presentationen lyssnar på `board_effect`, `powerup_changed` och `powerup_used`.
+- Lobbyvalen (krock, specialblock, powerups) är en gemensam komponent, `scenes/menus/match_options.gd`, som både den lokala lobbyn och online-lobbyn använder.
+
 ## Online (peer-to-peer med host)
 
 ```

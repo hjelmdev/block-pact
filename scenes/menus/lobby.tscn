@@ -1,6 +1,7 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://scenes/menus/lobby.gd" id="1"]
+[ext_resource type="Script" path="res://scenes/menus/match_options.gd" id="90_opts"]
 [ext_resource type="PackedScene" path="res://scenes/menus/menu_background.tscn" id="2"]
 
 [node name="Lobby" type="Control"]
@@ -87,11 +88,10 @@ layout_mode = 2
 size_flags_horizontal = 3
 text = "LOBBY_ADD_BOT"
 
-[node name="CollisionCheck" type="CheckButton" parent="Margin/Center/Panel/VBox"]
+[node name="MatchOptions" type="VBoxContainer" parent="Margin/Center/Panel/VBox"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 40)
 layout_mode = 2
-text = "LOBBY_COLLISION"
+script = ExtResource("90_opts")
 
 [node name="InfoLabel" type="Label" parent="Margin/Center/Panel/VBox"]
 unique_name_in_owner = true

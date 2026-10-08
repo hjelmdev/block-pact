@@ -47,12 +47,45 @@ func bind_match(sim: MatchSimulation, setup: MatchSetup, _controller: Node) -> v
 	sim.level_changed.connect(func(_l): AudioManager.play(Sfx.LEVEL_UP))
 	sim.player_topped_out.connect(func(_pid): AudioManager.play(Sfx.TOP_OUT))
 	sim.match_finished.connect(func(_r): AudioManager.play(Sfx.GAME_OVER))
+	sim.board_effect.connect(_on_board_effect)
+	sim.powerup_changed.connect(func(pid, id):
+		if id > 0:
+			AudioManager.play(Sfx.POWERUP_GET, 1.0, 0.0 if pid in _audible_players or all_bots else -6.0))
+	sim.powerup_used.connect(func(_pid, id): _on_powerup_used(sim.get_powerup_type(id)))
 
 
 func _on_lines_cleared(result: LineClearResult) -> void:
 	AudioManager.play(Sfx.line_clear(result.line_count()))
-	if not result.specials_triggered.is_empty():
-		AudioManager.play(Sfx.SPECIAL)
+	for key in result.specials_triggered:
+		if key in [&"x2", &"x3", &"x5"]:
+			AudioManager.play(Sfx.SPECIAL)
+			break
+
+
+func _on_powerup_used(t: PowerupType) -> void:
+	AudioManager.play(Sfx.POWERUP_USE)
+	if t == null:
+		return
+	if t.effect == PowerupType.Effect.SLOW:
+		AudioManager.play(Sfx.SLOW)
+	elif t.effect == PowerupType.Effect.RUSH:
+		AudioManager.play(Sfx.RUSH)
+
+
+func _on_board_effect(e: Dictionary) -> void:
+	match String(e.key):
+		"bomb", "bomb_piece":
+			AudioManager.play(Sfx.EXPLOSION)
+		"megabomb":
+			AudioManager.play(Sfx.MEGABOMB)
+		"laser":
+			AudioManager.play(Sfx.LASER)
+		"paint":
+			AudioManager.play(Sfx.PAINT)
+		"gold":
+			AudioManager.play(Sfx.GOLD)
+		"quake":
+			AudioManager.play(Sfx.QUAKE)
 
 
 func on_score_arrived(_pid: int, _points: int, _mult: int) -> void:

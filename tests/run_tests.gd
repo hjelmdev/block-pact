@@ -15,6 +15,8 @@ func _init() -> void:
 	_test_active_collision()
 	_test_bot_plays()
 	_test_lockstep_two_peers()
+	_test_special_effects()
+	_test_powerups()
 	print("\n%d passed, %d failed" % [_passes, _failures])
 	quit(1 if _failures > 0 else 0)
 
@@ -233,3 +235,160 @@ func _test_lockstep_two_peers() -> void:
 	print("    lockstep: host tick %d, client stopped at %d, %d hashes compared, stalls %d" % [s0.tick_count, peers[1].sim.tick_count, checked, peers[0].ls.stalled_frames])
 	_check(hashes_ok and checked > 5, "lockstep peers stay identical under latency")
 	_check(s0.tick_count > 2000 or s0.finished, "host continues after a player drops")
+
+
+func _effects_sim(players := 2) -> MatchSimulation:
+	var setup := _make_setup(players, 99)
+	setup.rule_overrides = {"special_preset": "all", "powerups_enabled": true}
+	var sim := MatchSimulation.new(setup)
+	sim.start()
+	return sim
+
+
+## Fills row y with owner `o` (except cells listed in `holes`).
+func _fill_row(b: BoardState, y: int, o: int, holes := []) -> void:
+	for x in b.width:
+		if not holes.has(x):
+			b.set_cell(x, y, o)
+
+
+func _test_special_effects() -> void:
+	var sim := _effects_sim()
+	var b := sim.board
+	var bottom := b.height - 1
+	# Bomb at (5, bottom); blocks in the row above get destroyed in a 3x3.
+	_fill_row(b, bottom, 0)
+	b.set_cell(5, bottom, 0, 10)
+	_fill_row(b, bottom - 1, 1, [0])
+	var effects: Array = []
+	sim.board_effect.connect(func(e): effects.append(e))
+	sim._clear_rows(sim.players[1], PackedInt32Array([bottom]))
+	# Row above collapsed into bottom: x 4..6 were destroyed.
+	_check(b.get_owner(4, bottom) == BoardState.EMPTY and b.get_owner(6, bottom) == BoardState.EMPTY
+			and b.get_owner(3, bottom) == 1 and b.get_owner(7, bottom) == 1, "bomb destroys 3x3 (outside the cleared row)")
+	_check(effects.size() == 1 and effects[0].key == &"bomb" and effects[0].cells.size() == 3, "bomb reports destroyed cells")
+
+	# Laser clears its column above the cleared row.
+	for y in range(bottom - 5, bottom):
+		b.set_cell(2, y, 1)
+	_fill_row(b, bottom, 0)
+	b.set_cell(2, bottom, 0, 12)
+	sim._clear_rows(sim.players[0], PackedInt32Array([bottom]))
+	var col_empty := true
+	for y in b.height:
+		if b.get_owner(2, y) != BoardState.EMPTY:
+			col_empty = false
+	_check(col_empty, "laser clears the whole column")
+
+	# Paint repaints neighbours in the owner's color.
+	var b2 := _effects_sim().board
+	var sim2: MatchSimulation = null
+	sim2 = _effects_sim()
+	b2 = sim2.board
+	_fill_row(b2, bottom, 0)
+	b2.set_cell(4, bottom, 0, 13)
+	b2.set_cell(3, bottom - 1, 1)
+	b2.set_cell(4, bottom - 1, 1)
+	b2.set_cell(5, bottom - 1, 1)
+	b2.set_cell(7, bottom - 1, 1)
+	sim2._clear_rows(sim2.players[1], PackedInt32Array([bottom]))
+	_check(b2.get_owner(3, bottom) == 0 and b2.get_owner(5, bottom) == 0 and b2.get_owner(7, bottom) == 1, "paint steals neighbours")
+
+	# Gold gives a bonus to the finisher.
+	var sim3 := _effects_sim()
+	_fill_row(sim3.board, bottom, 0)
+	sim3.board.set_cell(1, bottom, 0, 14)
+	var before := sim3.players[1].score
+	var res: Array = []
+	sim3.lines_cleared.connect(func(r): res.append(r))
+	sim3._clear_rows(sim3.players[1], PackedInt32Array([bottom]))
+	_check(sim3.players[1].score - before >= 300 + 50, "gold pays the finisher")
+
+
+func _test_powerups() -> void:
+	var sim := _effects_sim(3)
+	var b := sim.board
+	var bottom := b.height - 1
+	# Powerup cell gives the finisher a powerup.
+	_fill_row(b, bottom, 0)
+	b.set_cell(3, bottom, 0, 20)
+	sim._clear_rows(sim.players[2], PackedInt32Array([bottom]))
+	_check(sim.players[2].powerup > 0, "powerup cell grants the finisher a powerup")
+
+	# Rush: others fall faster, Slow: you fall slower.
+	var rush := sim.get_powerup_type(5)
+	sim.players[0].powerup = rush.id
+	var inputs := PackedInt32Array([InputCommand.USE_POWER, 0, 0])
+	sim.step(inputs)
+	_check(sim.players[1].rush_ticks > 0 and sim.players[0].rush_ticks == 0, "rush hits everyone else")
+	_check(sim.gravity_ticks_for(sim.players[1]) < sim.gravity_ticks_for(sim.players[0]), "rush speeds up gravity")
+	sim.players[1].powerup = 2
+	sim.step(PackedInt32Array([0, InputCommand.USE_POWER, 0]))
+	_check(sim.players[1].slow_ticks > 0 and sim.players[1].rush_ticks == 0, "slow cancels rush")
+
+	# Double doubles the award.
+	var s2 := _effects_sim()
+	s2.players[0].double_ticks = 100
+	_fill_row(s2.board, bottom, 0)
+	var got: Array = []
+	s2.lines_cleared.connect(func(r): got.append(r))
+	s2._clear_rows(s2.players[1], PackedInt32Array([bottom]))
+	_check(got[0].doubled.has(0) and not got[0].doubled.has(1), "double doubles only its holder")
+
+	# Quake settles floating blocks and clears the resulting full row.
+	var s3 := _effects_sim()
+	var b3 := s3.board
+	_fill_row(b3, bottom, 1, [4])
+	b3.set_cell(4, bottom - 3, 0)
+	s3.players[0].powerup = 4
+	s3._use_powerup(s3.players[0])
+	var empty := true
+	for x in b3.width:
+		if b3.get_owner(x, bottom) != BoardState.EMPTY:
+			empty = false
+	_check(empty and s3.total_lines == 1, "quake fills the hole and clears the row")
+
+	# Bomb piece explodes on lock.
+	var s4 := _effects_sim(1)
+	var b4 := s4.board
+	_fill_row(b4, bottom, 0, [0])
+	_fill_row(b4, bottom - 1, 0, [0])
+	s4.players[0].powerup = 1
+	for i in 30:
+		s4.step(PackedInt32Array([0]))
+	s4.step(PackedInt32Array([InputCommand.USE_POWER]))
+	_check(s4.players[0].active != null and s4.players[0].active.bomb, "bomb powerup arms the falling piece")
+	s4.step(PackedInt32Array([InputCommand.HARD_DROP]))
+	_check(s4.players[0].blocks_destroyed > 0, "bomb piece destroys blocks when it locks")
+
+	# Determinism with all specials and powerups.
+	var a := _run_fx(_effects_setup(4, 7), 3000)
+	var c := _run_fx(_effects_setup(4, 7), 3000)
+	_check(a == c, "specials + powerups stay deterministic")
+
+
+func _effects_setup(players: int, seed_value: int) -> MatchSetup:
+	var setup := _make_setup(players, seed_value)
+	setup.rule_overrides = {"special_preset": "all", "powerups_enabled": true, "powerup_cell_chance": 0.4}
+	return setup
+
+
+func _run_fx(setup: MatchSetup, ticks: int) -> String:
+	var sim := MatchSimulation.new(setup)
+	sim.start()
+	var r := RandomNumberGenerator.new()
+	r.seed = 1234
+	for t in ticks:
+		var inputs := PackedInt32Array()
+		for i in setup.player_count():
+			var bits := 0
+			if r.randf() < 0.08:
+				bits = [InputCommand.LEFT, InputCommand.RIGHT, InputCommand.ROTATE_CW, InputCommand.HARD_DROP, InputCommand.USE_POWER][r.randi() % 5]
+			inputs.append(bits)
+		sim.step(inputs)
+		if sim.finished:
+			break
+	var scores := []
+	for p in sim.players:
+		scores.append([p.score, p.blocks_destroyed, p.powerups_used])
+	return str([sim.tick_count, sim.total_lines, scores, hash(sim.board.owners)])

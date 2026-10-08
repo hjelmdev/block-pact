@@ -51,6 +51,7 @@ func _run() -> void:
 		f.close()
 		print("[host] room ", Net.room_code)
 		Net.host_add_bot("hard")
+		Net.host_set_options({"collision": false, "powerups": true, "specials": "all"})
 		var t := 0.0
 		while not Net.host_can_start() or Net.lobby.slots.size() < 3:
 			await _wait(0.25)

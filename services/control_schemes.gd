@@ -12,6 +12,7 @@ const COMMAND_ACTIONS := {
 	InputCommand.ROTATE_CW: "rotate_cw",
 	InputCommand.ROTATE_CCW: "rotate_ccw",
 	InputCommand.HOLD: "hold",
+	InputCommand.USE_POWER: "use_power",
 }
 
 ## Physical key positions, so layouts (e.g. Swedish vs US) don't matter.
@@ -20,17 +21,18 @@ const KEYBOARD_SCHEMES := {
 		"name": "Keyboard",
 		"left": [KEY_LEFT, KEY_A], "right": [KEY_RIGHT, KEY_D], "soft_drop": [KEY_DOWN, KEY_S],
 		"hard_drop": [KEY_SPACE], "rotate_cw": [KEY_UP, KEY_X, KEY_W], "rotate_ccw": [KEY_Z, KEY_CTRL, KEY_Q],
-		"hold": [KEY_C, KEY_SHIFT, KEY_E],
+		"hold": [KEY_C, KEY_SHIFT, KEY_E], "use_power": [KEY_V, KEY_F, KEY_ENTER],
 	},
 	&"kb_left": {
 		"name": "Keyboard (left: WASD)",
 		"left": [KEY_A], "right": [KEY_D], "soft_drop": [KEY_S], "hard_drop": [KEY_W],
-		"rotate_cw": [KEY_E], "rotate_ccw": [KEY_Q], "hold": [KEY_SHIFT],
+		"rotate_cw": [KEY_E], "rotate_ccw": [KEY_Q], "hold": [KEY_SHIFT], "use_power": [KEY_R],
 	},
 	&"kb_right": {
 		"name": "Keyboard (right: arrows)",
 		"left": [KEY_LEFT], "right": [KEY_RIGHT], "soft_drop": [KEY_DOWN], "hard_drop": [KEY_UP],
 		"rotate_cw": [KEY_PERIOD, KEY_KP_2], "rotate_ccw": [KEY_COMMA, KEY_KP_1], "hold": [KEY_SLASH, KEY_KP_3],
+		"use_power": [KEY_ENTER, KEY_KP_0],
 	},
 }
 

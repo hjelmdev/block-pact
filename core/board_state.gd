@@ -82,6 +82,21 @@ func clear_cell(x: int, y: int) -> void:
 	set_cell(x, y, EMPTY, 0, 0)
 
 
+func set_owner(x: int, y: int, owner: int) -> void:
+	if in_bounds(x, y):
+		owners[idx(x, y)] = owner
+
+
+## Moves a cell (owner, special, piece id) and leaves the source empty.
+func move_cell(from: Vector2i, to: Vector2i) -> void:
+	var a := idx(from.x, from.y)
+	var b := idx(to.x, to.y)
+	owners[b] = owners[a]
+	specials[b] = specials[a]
+	piece_ids[b] = piece_ids[a]
+	clear_cell(from.x, from.y)
+
+
 func cells_fit(cells: Array[Vector2i]) -> bool:
 	for c in cells:
 		if is_blocked(c.x, c.y):

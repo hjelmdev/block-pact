@@ -60,6 +60,10 @@ static func quick_solo() -> MatchSetup:
 	var m := MatchSetup.new()
 	m.mode = load_mode(&"classic_solo")
 	m.slots = [human_slot(0)]
+	var o := MatchOptions.saved_options()
+	o.erase("collision")
+	m.rule_overrides = MatchOptions.to_rule_overrides(o)
+	m.rule_overrides.erase("active_piece_collision")
 	return m
 
 

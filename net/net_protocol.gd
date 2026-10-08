@@ -47,4 +47,5 @@ static func state_hash(sim: MatchSimulation) -> int:
 	for p in sim.players:
 		parts.append(p.score)
 		parts.append(p.active.position if p.active else Vector2i(-1, -1))
+		parts.append([p.powerup, p.slow_ticks, p.double_ticks, p.rush_ticks, p.bomb_armed])
 	return hash(parts)

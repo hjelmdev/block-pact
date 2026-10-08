@@ -10,6 +10,12 @@
 [ext_resource type="Texture2D" path="res://skins/default/textures/special_x2.png" id="8_xp2bt"]
 [ext_resource type="Texture2D" path="res://skins/default/textures/special_x3.png" id="9_l7uro"]
 [ext_resource type="Texture2D" path="res://skins/default/textures/special_x5.png" id="10_52tny"]
+[ext_resource type="Texture2D" path="res://skins/default/textures/special_bomb.png" id="11_0b7kw"]
+[ext_resource type="Texture2D" path="res://skins/default/textures/special_megabomb.png" id="12_xp2bt"]
+[ext_resource type="Texture2D" path="res://skins/default/textures/special_laser.png" id="13_l7uro"]
+[ext_resource type="Texture2D" path="res://skins/default/textures/special_paint.png" id="14_52tny"]
+[ext_resource type="Texture2D" path="res://skins/default/textures/special_gold.png" id="15_o8so7"]
+[ext_resource type="Texture2D" path="res://skins/default/textures/special_powerup.png" id="16_qq1ch"]
 
 [resource]
 script = ExtResource("7_0b7kw")
@@ -19,6 +25,13 @@ grid_texture = ExtResource("5_c1y80")
 ghost_texture = ExtResource("3_nmss4")
 glow_texture = ExtResource("4_cd18c")
 special_overlays = {
+&"bomb": ExtResource("11_0b7kw"),
+&"bomb_piece": ExtResource("11_0b7kw"),
+&"gold": ExtResource("15_o8so7"),
+&"laser": ExtResource("13_l7uro"),
+&"megabomb": ExtResource("12_xp2bt"),
+&"paint": ExtResource("14_52tny"),
+&"powerup": ExtResource("16_qq1ch"),
 &"x2": ExtResource("8_xp2bt"),
 &"x3": ExtResource("9_l7uro"),
 &"x5": ExtResource("10_52tny")

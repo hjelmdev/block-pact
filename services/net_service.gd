@@ -114,7 +114,7 @@ func host_room(public: bool, player_name: String) -> void:
 	peers = {1: {"name": my_name, "key": my_key, "connected": true, "ping_ms": 0}}
 	lobby = {
 		"mode_id": "shared_competition",
-		"collision": GameSettings.get_value("game", "piece_collision", false),
+		"options": MatchOptions.saved_options(),
 		"slots": [_human_slot_dict(1, my_name)],
 		"code": room_code,
 	}
@@ -147,9 +147,9 @@ func host_set_mode(mode_id: String) -> void:
 	_lobby_updated()
 
 
-func host_set_collision(on: bool) -> void:
+func host_set_options(options: Dictionary) -> void:
 	if is_host:
-		lobby.collision = on
+		lobby.options = options.duplicate()
 		_lobby_updated()
 
 
@@ -614,7 +614,7 @@ func _human_slot_dict(peer_id: int, pname: String) -> Dictionary:
 func _lobby_to_setup() -> MatchSetup:
 	var setup := MatchSetup.new()
 	setup.mode = MatchFactory.load_mode(StringName(lobby.mode_id))
-	setup.rule_overrides = {"active_piece_collision": lobby.get("collision", false)}
+	setup.rule_overrides = MatchOptions.to_rule_overrides(lobby.get("options", {}))
 	var slots: Array[PlayerSlot] = []
 	for i in lobby.slots.size():
 		var s: Dictionary = lobby.slots[i]

@@ -25,6 +25,11 @@ var level: int = 1
 var awards: Dictionary = {}
 ## Special keys that were part of the cleared rows (for effects/sounds).
 var specials_triggered: Array[StringName] = []
+## Board effects caused by special cells in the cleared rows (see
+## MatchSimulation.board_effect for the dictionary layout).
+var effects: Array = []
+## Players whose awards were doubled by the Double powerup.
+var doubled: Array[int] = []
 
 
 func line_count() -> int:

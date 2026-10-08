@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="SpecialBlockType" format=3]
+
+[ext_resource type="Script" path="res://core/special_block_type.gd" id="1_sbt"]
+
+[resource]
+script = ExtResource("1_sbt")
+id = 11
+key = &"megabomb"
+effect = 1
+multiplier = 1
+radius = 2
+bonus_points = 0
+spawn_weight = 0.7

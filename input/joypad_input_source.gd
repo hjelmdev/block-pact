@@ -30,4 +30,6 @@ func _read_held() -> int:
 		bits |= InputCommand.ROTATE_CCW
 	if Input.is_joy_button_pressed(device, JOY_BUTTON_LEFT_SHOULDER) or Input.is_joy_button_pressed(device, JOY_BUTTON_RIGHT_SHOULDER):
 		bits |= InputCommand.HOLD
+	if Input.is_joy_button_pressed(device, JOY_BUTTON_Y):
+		bits |= InputCommand.USE_POWER
 	return bits

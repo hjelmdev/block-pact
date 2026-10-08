@@ -10,6 +10,9 @@ const TEX := "res://skins/default/textures/"
 const PAT := "res://skins/default/patterns/"
 
 
+const SPECIAL_ART := [&"bomb", &"megabomb", &"laser", &"paint", &"gold", &"powerup"]
+
+
 func _init() -> void:
 	var shader_mat := ShaderMaterial.new()
 	shader_mat.shader = load("res://skins/shaders/block_tint.gdshader")
@@ -27,6 +30,9 @@ func _init() -> void:
 		&"x3": load(TEX + "special_x3.png"),
 		&"x5": load(TEX + "special_x5.png"),
 	}
+	for k in SPECIAL_ART:
+		skin.special_overlays[k] = load(TEX + "special_%s.png" % k)
+	skin.special_overlays[&"bomb_piece"] = load(TEX + "special_bomb.png")
 	ResourceSaver.save(skin, "res://skins/default/default_block_skin.tres")
 
 	var palette := PlayerPalette.new()
@@ -75,6 +81,16 @@ func _init() -> void:
 		[Sfx.STEAL, "steal", -2.0, 0.0, 2],
 		[Sfx.LEAD_CHANGE, "lead_change", -4.0, 0.0, 1],
 		[Sfx.LEAD_LOST, "lead_lost", -3.0, 0.0, 1],
+		[Sfx.EXPLOSION, "explosion", -1.0, 0.08, 3],
+		[Sfx.MEGABOMB, "megabomb", 0.0, 0.05, 2],
+		[Sfx.LASER, "laser", -3.0, 0.05, 2],
+		[Sfx.PAINT, "paint", -3.0, 0.05, 2],
+		[Sfx.GOLD, "gold", -3.0, 0.05, 2],
+		[Sfx.POWERUP_GET, "powerup_get", -2.0, 0.0, 2],
+		[Sfx.POWERUP_USE, "powerup_use", -2.0, 0.0, 2],
+		[Sfx.QUAKE, "quake", 0.0, 0.0, 1],
+		[Sfx.SLOW, "slow", -3.0, 0.0, 1],
+		[Sfx.RUSH, "rush", -3.0, 0.0, 1],
 		[Sfx.UI_CLICK, "ui_click", -6.0, 0.05, 2],
 		[Sfx.UI_BACK, "ui_back", -6.0, 0.0, 2],
 	]
@@ -100,7 +116,8 @@ func _init() -> void:
 	ga.sound_library = load("res://audio/default_sound_library.tres")
 	ga.ui_theme = load("res://ui/theme/main_theme.tres")
 	var icons := {}
-	for n in ["left", "right", "down", "hard_drop", "rotate_cw", "rotate_ccw", "hold", "pause"]:
+	for n in ["left", "right", "down", "hard_drop", "rotate_cw", "rotate_ccw", "hold", "pause",
+			"power", "pu_bomb", "pu_slow", "pu_double", "pu_quake", "pu_rush"]:
 		icons[StringName(n)] = load("res://ui/icons/%s.png" % n)
 	ga.icons = icons
 	ResourceSaver.save(ga, "res://config/game_assets.tres")

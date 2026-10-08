@@ -14,6 +14,7 @@ const HARD_DROP := 8
 const ROTATE_CW := 16
 const ROTATE_CCW := 32
 const HOLD := 64
+const USE_POWER := 128
 
 ## Returned by an input source that has no data yet for a tick (lockstep stall).
 const NOT_READY := -1

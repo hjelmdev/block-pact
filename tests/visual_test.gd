@@ -22,7 +22,41 @@ func _detach() -> void:
 	var dummy := Node.new()
 	get_tree().root.add_child(dummy)
 	get_tree().current_scene = dummy
-	_run()
+	if OS.get_cmdline_user_args().has("--fx"):
+		_run_fx()
+	else:
+		_run()
+
+
+## Special blocks + powerups: 4 hard bots with boosted chances.
+func _run_fx() -> void:
+	var win := get_window()
+	win.size = Vector2i(1280, 720)
+	var setup := MatchFactory.vs_bots(3, &"hard")
+	setup.slots[0] = MatchFactory.bot_slot(0, &"hard")
+	setup.slots[0].display_name = "Adam"
+	setup.rule_overrides = {"special_preset": "all", "powerups_enabled": true,
+			"powerup_cell_chance": 0.35, "special_chance": 0.5}
+	Router.goto(&"match", {"setup": setup})
+	await _wait(5.0)
+	var sim: MatchSimulation = get_tree().current_scene.controller.sim
+	var keys := {}
+	var n := 0
+	while n < 4:
+		var e: Dictionary = await sim.board_effect
+		if keys.has(e.key) or e.key == &"gold":
+			continue
+		keys[e.key] = true
+		await _wait(0.12)
+		await _shot("fx_%d_%s" % [n, e.key])
+		n += 1
+	await _wait(1.0)
+	await _shot("fx_panels")
+	win.size = Vector2i(390, 844)
+	await _wait(2.0)
+	await _shot("fx_portrait")
+	print("visual test done")
+	get_tree().quit()
 
 
 func _run() -> void:

@@ -19,6 +19,8 @@ var _last_rot := -1
 var _planned_version := -1
 var _planned_tick := -999
 var _last_action := 0
+var _power_seen := 0
+var _power_since := 0
 ## Re-plan at most this often when the shared board changes (CPU budget).
 const REPLAN_MIN_TICKS := 8
 
@@ -35,6 +37,8 @@ func bind(p_sim: MatchSimulation, p_player_id: int) -> void:
 
 func gather(_tick: int) -> int:
 	var p := sim.get_player(player_id)
+	if p != null and p.powerup > 0 and _wants_power(p):
+		return InputCommand.USE_POWER
 	if p == null or p.active == null:
 		_piece_uid = -1
 		return 0
@@ -68,6 +72,48 @@ func gather(_tick: int) -> int:
 		return 0
 	_cooldown = maxi(profile.move_interval_ticks - 1, 0)
 	return _next_action(p)
+
+
+## Simple powerup policy: hold a powerup for a short, human-like moment,
+## then use it when it helps (or when it has been held for long).
+func _wants_power(p: PlayerState) -> bool:
+	if p.powerup != _power_seen:
+		_power_seen = p.powerup
+		_power_since = sim.tick_count + 30 + rng.randi_range(0, 90)
+		return false
+	if sim.tick_count < _power_since or sim.tick_count % 15 != 0:
+		return false
+	var t := sim.get_powerup_type(p.powerup)
+	if t == null:
+		return true
+	var held_long := sim.tick_count - _power_since > 60 * 20
+	var b := sim.board
+	var max_h := 0
+	for x in b.width:
+		max_h = maxi(max_h, b.column_height(x))
+	var fill := float(max_h) / float(b.visible_height())
+	match t.effect:
+		PowerupType.Effect.DOUBLE, PowerupType.Effect.RUSH:
+			return true
+		PowerupType.Effect.SLOW:
+			return fill > 0.5 or held_long
+		PowerupType.Effect.BOMB_PIECE:
+			return p.active != null and (fill > 0.45 or _holes(b) > b.width / 3 or held_long)
+		PowerupType.Effect.QUAKE:
+			return _holes(b) > b.width / 2 or fill > 0.6 or held_long
+	return held_long
+
+
+static func _holes(b: BoardState) -> int:
+	var holes := 0
+	for x in b.width:
+		var covered := false
+		for y in b.height:
+			if b.is_occupied(x, y):
+				covered = true
+			elif covered:
+				holes += 1
+	return holes
 
 
 func _choose(p: PlayerState) -> BotBrain.Placement:

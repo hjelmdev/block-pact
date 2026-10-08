@@ -13,7 +13,7 @@ var _prev: int = 0
 var _dir: int = 0
 var _dir_timer: int = 0
 
-const _ONE_SHOT := [InputCommand.HARD_DROP, InputCommand.ROTATE_CW, InputCommand.ROTATE_CCW, InputCommand.HOLD]
+const _ONE_SHOT := [InputCommand.HARD_DROP, InputCommand.ROTATE_CW, InputCommand.ROTATE_CCW, InputCommand.HOLD, InputCommand.USE_POWER]
 
 
 func _init() -> void:

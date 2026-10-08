@@ -9,6 +9,8 @@ var owner_id: int = -1
 var uid: int = 0
 ## cell index (stable across rotations) -> SpecialBlockType id
 var specials: Dictionary = {}
+## Explodes (3x3 around every cell) when it locks – the Bomb powerup.
+var bomb: bool = false
 
 
 func _init(p_shape: PieceShape = null, p_owner: int = -1, p_uid: int = 0) -> void:

@@ -56,6 +56,8 @@ func evaluate_clear(board_rows: Array, row_ys: PackedInt32Array, finisher_id: in
 			if sp > 0 and special_types.has(sp):
 				var t: SpecialBlockType = special_types[sp]
 				result.specials_triggered.append(t.key)
+				if not t.is_multiplier():
+					continue
 				specials_by_owner[owner] = specials_by_owner.get(owner, 1) * t.multiplier
 				whole_row_mult *= t.multiplier
 				if owner == finisher_id:
