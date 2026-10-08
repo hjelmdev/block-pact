@@ -564,6 +564,7 @@ func _lock(p: PlayerState) -> void:
 		p.blocks_destroyed += destroyed.size()
 		board_effect.emit({"key": &"bomb_piece", "owner": p.id, "player": p.id,
 				"origin": cells[0], "cells": destroyed, "amount": 0})
+		_settle_above(destroyed, PackedInt32Array(), p)
 
 	var full := board.find_full_rows()
 	if full.is_empty():
@@ -595,13 +596,14 @@ func _clear_rows(finisher: PlayerState, rows: PackedInt32Array) -> void:
 
 	var result := _score_rules.evaluate_clear(row_cells, rows, finisher.id, finisher.combo, level,
 			board.width, _special_by_id)
-	_apply_special_effects(finisher, rows, row_cells, result)
+	var destroyed := _apply_special_effects(finisher, rows, row_cells, result)
 	for pid: int in result.awards.keys():
 		var dp := get_player(pid)
 		if dp and dp.double_ticks > 0:
 			result.awards[pid] *= 2
 			result.doubled.append(pid)
 	board.remove_rows(rows)
+	_settle_above(destroyed, rows, finisher)
 	_resolve_active_overlaps()
 
 	finisher.lines_finished += rows.size()
@@ -631,12 +633,18 @@ func _clear_rows(finisher: PlayerState, rows: PackedInt32Array) -> void:
 	if new_level != level:
 		level = new_level
 		level_changed.emit(level)
+	# Chain reaction: blocks that fell after a blast may have filled rows.
+	if not finished:
+		var chain := board.find_full_rows()
+		if not chain.is_empty():
+			_clear_rows(finisher, chain)
 
 
 ## Special cells in the rows being cleared. Runs before the rows collapse, so
 ## coordinates are the pre-clear ones. Never touches the full rows themselves.
 func _apply_special_effects(finisher: PlayerState, rows: PackedInt32Array, row_cells: Array,
-		result: LineClearResult) -> void:
+		result: LineClearResult) -> Array[Vector2i]:
+	var destroyed: Array[Vector2i] = []
 	var skip := {}
 	for y in rows:
 		skip[y] = true
@@ -658,12 +666,14 @@ func _apply_special_effects(finisher: PlayerState, rows: PackedInt32Array, row_c
 				SpecialBlockType.Effect.BOMB:
 					affected.append_array(_destroy_area([origin] as Array[Vector2i], t.radius, skip))
 					_count_destroyed(owner, affected.size())
+					destroyed.append_array(affected)
 				SpecialBlockType.Effect.LASER:
 					for yy in board.height:
 						if not skip.has(yy) and board.is_occupied(origin.x, yy):
 							board.clear_cell(origin.x, yy)
 							affected.append(Vector2i(origin.x, yy))
 					_count_destroyed(owner, affected.size())
+					destroyed.append_array(affected)
 				SpecialBlockType.Effect.PAINT:
 					for dy in range(-t.radius, t.radius + 1):
 						for dx in range(-t.radius, t.radius + 1):
@@ -686,6 +696,40 @@ func _apply_special_effects(finisher: PlayerState, rows: PackedInt32Array, row_c
 			result.effects.append(e)
 	if not result.effects.is_empty():
 		board_version += 1
+	return destroyed
+
+
+## After a blast: in every column where blocks were destroyed, the blocks
+## above the lowest destroyed cell fall down into the gaps. `cells` are in
+## coordinates from before `removed_rows` collapsed. Rows that become full
+## are cleared by the caller (chain reaction).
+func _settle_above(cells: Array[Vector2i], removed_rows: PackedInt32Array, by: PlayerState) -> void:
+	if cells.is_empty():
+		return
+	var bottom := {}  # column -> lowest destroyed row (after the collapse)
+	for c in cells:
+		var y := c.y
+		for r in removed_rows:
+			if r > c.y:
+				y += 1
+		if y < board.height:
+			bottom[c.x] = maxi(bottom.get(c.x, -1), y)
+	var moved: Array[Vector2i] = []
+	var columns := bottom.keys()
+	columns.sort()
+	for x: int in columns:
+		var write: int = bottom[x]
+		for y in range(bottom[x], -1, -1):
+			if board.is_occupied(x, y):
+				if y != write:
+					board.move_cell(Vector2i(x, y), Vector2i(x, write))
+					moved.append(Vector2i(x, write))
+				write -= 1
+	if moved.is_empty():
+		return
+	board_version += 1
+	board_effect.emit({"key": &"settle", "owner": by.id, "player": by.id,
+			"origin": moved[0], "cells": moved, "amount": 0})
 
 
 ## Clears locked cells within `radius` (Chebyshev) of the given cells, except

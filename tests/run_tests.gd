@@ -272,6 +272,35 @@ func _test_special_effects() -> void:
 			and b.get_owner(3, bottom) == 1 and b.get_owner(7, bottom) == 1, "bomb destroys 3x3 (outside the cleared row)")
 	_check(effects.size() == 1 and effects[0].key == &"bomb" and effects[0].cells.size() == 3, "bomb reports destroyed cells")
 
+	# Blocks above a blast fall into the hole (the bomb row itself is gone).
+	var sf := _effects_sim()
+	var bf := sf.board
+	_fill_row(bf, bottom, 0)
+	bf.set_cell(5, bottom, 0, 10)
+	for x in [4, 5, 6]:
+		bf.set_cell(x, bottom - 1, 1)
+	bf.set_cell(5, bottom - 3, 1)
+	bf.set_cell(5, bottom - 4, 0)
+	sf._clear_rows(sf.players[0], PackedInt32Array([bottom]))
+	_check(bf.get_owner(5, bottom) == 1 and bf.get_owner(5, bottom - 1) == 0
+			and bf.get_owner(5, bottom - 2) == BoardState.EMPTY, "blocks above a blast fall down")
+
+	# ...and if that fills a row, it clears too (chain reaction).
+	var sc := _effects_sim()
+	var bc := sc.board
+	_fill_row(bc, bottom, 0)
+	bc.set_cell(5, bottom, 0, 10)
+	_fill_row(bc, bottom - 1, 1)
+	for x in [4, 5, 6]:
+		bc.set_cell(x, bottom - 2, 0)
+	var lines_before := sc.total_lines
+	sc._clear_rows(sc.players[0], PackedInt32Array([bottom]))
+	var empty_board := true
+	for i in bc.owners.size():
+		if bc.owners[i] != BoardState.EMPTY:
+			empty_board = false
+	_check(sc.total_lines - lines_before == 2 and empty_board and sc.players[0].combo == 2, "blast + fall can chain another clear")
+
 	# Laser clears its column above the cleared row.
 	for y in range(bottom - 5, bottom):
 		b.set_cell(2, y, 1)

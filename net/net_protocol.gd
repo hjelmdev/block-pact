@@ -5,7 +5,7 @@ extends RefCounted
 
 ## Bump when the simulation or protocol changes – peers must match exactly
 ## because lockstep requires bit-identical simulations.
-const VERSION := 4
+const VERSION := 5
 
 const MSG_HELLO := 1        # C->H [name, user_id, version]
 const MSG_LOBBY := 2        # H->C [lobby_dict]

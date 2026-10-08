@@ -276,6 +276,9 @@ func _on_board_effect(e: Dictionary) -> void:
 		"quake":
 			_add_burst(&"quake", cells, Color(1.0, 0.8, 0.5), 0.6, e.origin)
 			shake(9.0)
+		"settle":
+			_add_burst(&"quake", cells, Color(0.75, 0.9, 1.0), 0.35, e.origin)
+			shake(2.0)
 		"knockout":
 			_add_burst(&"paint", cells, col, 0.8, e.origin)
 			shake(10.0)
