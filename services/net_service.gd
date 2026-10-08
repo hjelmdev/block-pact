@@ -98,6 +98,8 @@ func _ready() -> void:
 	rt.presence_changed.connect(_on_presence)
 	rt.channel_error.connect(func(topic, msg): status.emit("Realtime: %s %s" % [topic, msg], true))
 	rt.disconnected.connect(_on_rt_disconnected)
+	if config.online_available():
+		add_child(TurnCredentials.new(config, config.ice_servers))
 
 
 func is_available() -> bool:

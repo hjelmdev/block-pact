@@ -66,6 +66,9 @@ func _ready() -> void:
 			get_tree().quit(1)
 		return
 	_log("starting '%s' (build %s), max %d rooms, %d kept open" % [server_name, NetProtocol.build_id(), max_rooms, min_open])
+	var turn := TurnCredentials.new(config, config.ice_servers)
+	turn.updated.connect(func(n): _log("TURN: %d relay server(s) available" % n if n > 0 else "TURN: not configured – STUN only"))
+	add_child(turn)
 	_connect()
 
 

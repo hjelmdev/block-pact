@@ -67,6 +67,11 @@ Verifieringen slås på när miljövariabeln `BLOCK_PACT_SERVICE_KEY` innehålle
 
 Utan någon verifierare skickas poängen fortfarande in, men de hamnar inte på topplistan förrän något kontrollerar dem.
 
-## Nästa steg
+## TURN (spelare bakom strikta nätverk)
 
-- **TURN:** spelare bakom strikta NAT:ar kan behöva en TURN-server i `BackendConfig.ice_servers`.
+Vissa mobilnät och företags-wifi släpper inte igenom direkta WebRTC-anslutningar. Då behövs en TURN-server som skickar trafiken vidare. Spelet och servern hämtar TURN-uppgifter automatiskt från Supabase Edge Function `turn-credentials` (`supabase/functions/turn-credentials/`, redan driftsatt). Den behöver bara nycklar:
+
+1. Cloudflare → *Realtime* → *TURN Server* → skapa en TURN-nyckel (gratis upp till en generös trafikmängd).
+2. Supabase → *Edge Functions* → *Secrets*: lägg in `CF_TURN_KEY_ID` och `CF_TURN_KEY_API_TOKEN`.
+
+Inget mer behövs, och ingen ny version av spelet. Uppgifterna gäller ett dygn och förnyas automatiskt. Utan nycklarna svarar funktionen med en tom lista, och allt fungerar som innan med bara STUN.

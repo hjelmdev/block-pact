@@ -91,7 +91,7 @@ Keyboard / Joypad / Touch / Bot / (Network) → InputSource.gather(tick) → int
 - **Chatt och emotes** går som Realtime Broadcast i rummets kanal (`chat`, `emote`), helt vid sidan av lockstep. Både avsändare och mottagare kör `ChatFilter` (längd, markup, ordlista i `data/chat_blocklist.txt`). Det finns en enkel hastighetsbegränsning, och man kan tysta spelare lokalt. Samma kanal fungerar oavsett om hosten är en spelare eller en server.
 - **Desync-skydd**: klienterna skickar en state-hash var 120:e tick och hosten jämför. Vid avvikelse visas en varning.
 - **WebRTC på desktop/editor** kräver GDExtensionen `addons/webrtc` (webrtc-native 1.1.0, Windows/Linux/macOS). Webbläsare har WebRTC inbyggt, så addonen exkluderas från webbexporten.
-- **NAT**: STUN (Google) används som standard. Spelare bakom strikta NAT:ar kan behöva en TURN-server, som läggs till i `BackendConfig.ice_servers`.
+- **NAT och TURN**: STUN (Google) används som standard. För spelare bakom strikta NAT:ar hämtar `TurnCredentials` (`net/turn_credentials.gd`) TURN-servrar med kortlivade inloggningsuppgifter från Edge Function `turn-credentials` (Cloudflare TURN). Den lägger in dem i `ice_servers`-listan, som spelet och servern redan använder, och förnyar dem innan de går ut. Om funktionen inte är uppsatt blir det ingen skillnad.
 - **`net/room_host.gd` (`RoomHost`)**: all host-logik för ett rum. `Net` använder en när spelaren är host, och den dedikerade servern kör många (se `docs/SERVER.md`). `MatchController` pratar med en *lockstep-endpoint*, antingen `Net` (spelare) eller en `RoomHost` (server).
 - **Rumsledare**: i serverrum styr den första spelaren läge, regler, bottar och start via `MSG_CMD`. I spelarrum är hosten alltid ledare.
 
@@ -116,6 +116,6 @@ Achievements låses fortfarande upp på klienten. De syns bara för spelaren sj�
 
 - Bottar på stora brädor: en bot kollar brädet igen precis innan den släpper klossen, om någon annan hunnit lägga en kloss sedan den planerade. Det höjde effektiviteten (rensade celler / lagda celler) för 8 svåra bottar från 38 % till 80 %, och de överlever ungefär 3 gånger längre. Normala bottar ligger kvar runt 65 % vid 8 spelare, eftersom de rör sig långsamt och oftare krockar med andras klossar. Spelplanens storlek och gravitation för många spelare behöver fortfarande speltestas med människor.
 - Inloggning från desktop/editor använder en lokal callback-server på port 43117.
-- Online: om hostens webbläsarflik ligger i bakgrunden står spelet still för alla tills den är tillbaka (spelarflikar hanteras, se ovan). Använd serverrum för att slippa det. Det finns ingen TURN-server ännu.
+- Online: om hostens webbläsarflik ligger i bakgrunden står spelet still för alla tills den är tillbaka (spelarflikar hanteras, se ovan). Använd serverrum för att slippa det.
 - Highscore-verifieringen stoppar påhittade poäng och manipulerade matcher, men inte en "perfekt" spelare som i själva verket är ett program som skapar giltiga inputs (TAS). Det skyddet kräver att matchen spelas på servern.
 - Svepkontrollerna är testade med simulerade touch-händelser, inte på riktiga telefoner än.

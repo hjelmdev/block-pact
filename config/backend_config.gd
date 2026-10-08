@@ -26,6 +26,10 @@ const DEFAULT_PATH := "res://config/backend_config.tres"
 ## Override the Realtime websocket URL (e.g. a local test server). Empty =
 ## derived from supabase_url.
 @export var realtime_url_override: String = ""
+## Fetch short-lived TURN servers from the Supabase Edge Function
+## "turn-credentials" (see supabase/functions/turn-credentials). Harmless
+## when the function is not set up.
+@export var turn_enabled: bool = true
 ## STUN/TURN servers for WebRTC. Add a TURN server here for players behind
 ## strict NATs, e.g. {"urls": ["turn:turn.example.com:3478"], "username": "u", "credential": "p"}.
 @export var ice_servers: Array[Dictionary] = [
