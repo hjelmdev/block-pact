@@ -50,7 +50,7 @@ func _build() -> void:
 
 func _refresh() -> void:
 	var lobby := Net.lobby
-	var host := Net.is_host
+	var host := Net.is_leader()
 	_mode.disabled = not host
 	_options.set_editable(host)
 	_add_bot.visible = host
@@ -86,6 +86,8 @@ func _refresh() -> void:
 				tag.text = tr("ONLINE_CONNECTING")
 			else:
 				tag.text = "%d ms" % int(p.get("ping_ms", 0))
+				if int(lobby.get("leader", 0)) == s.peer_id:
+					tag.text = tr("ONLINE_TAG_LEADER") + " · " + tag.text
 			if s.peer_id == Net.my_peer_id:
 				name_l.text += " (" + tr("ONLINE_TAG_YOU") + ")"
 		else:
@@ -105,7 +107,7 @@ func _refresh() -> void:
 					Net.set_muted(key, on)
 					mute.text = tr("CHAT_UNMUTE") if on else tr("CHAT_MUTE"))
 				row.add_child(mute)
-		if host and i > 0:
+		if host and not (s.kind == Net.HUMAN and (s.peer_id == Net.my_peer_id or s.peer_id == 1)):
 			var x := Button.new()
 			x.text = "X"
 			x.custom_minimum_size = Vector2(40, 36)

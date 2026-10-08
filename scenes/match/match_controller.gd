@@ -31,6 +31,10 @@ var record_inputs: bool = true
 var net_mode: bool = false
 var net_delay: int = 4
 var lockstep: NetLockstep
+## Lockstep endpoint: the Net autoload (players) or a RoomHost (server).
+## Needs send_inputs(), send_hash(), is_authority() and the signals
+## inputs_received, peer_dropped, desync_detected, host_lost.
+var endpoint: Object
 var _waiting := false
 const HASH_INTERVAL := 120
 
@@ -113,12 +117,14 @@ func _setup_lockstep() -> void:
 	for i in setup.slots.size():
 		if setup.slots[i].kind != PlayerSlot.Kind.REMOTE:
 			local.append(i)
+	if endpoint == null:
+		endpoint = Net
 	lockstep = NetLockstep.new(sim, sources, local, net_delay)
-	lockstep.send_inputs.connect(Net.send_inputs)
-	Net.inputs_received.connect(lockstep.receive)
-	Net.peer_dropped.connect(_on_net_peer_dropped)
-	Net.desync_detected.connect(_on_net_desync)
-	Net.host_lost.connect(_on_net_host_lost)
+	lockstep.send_inputs.connect(endpoint.send_inputs)
+	endpoint.inputs_received.connect(lockstep.receive)
+	endpoint.peer_dropped.connect(_on_net_peer_dropped)
+	endpoint.desync_detected.connect(_on_net_desync)
+	endpoint.host_lost.connect(_on_net_host_lost)
 
 
 func _on_net_desync(tick: int) -> void:
@@ -130,7 +136,7 @@ func _on_net_host_lost() -> void:
 
 
 func _on_net_peer_dropped(peer_id: int) -> void:
-	if not Net.is_host:
+	if not endpoint.is_authority():
 		return
 	for i in setup.slots.size():
 		if setup.slots[i].kind == PlayerSlot.Kind.REMOTE and setup.slots[i].peer_id == peer_id:
@@ -144,7 +150,7 @@ func _net_step() -> void:
 			_waiting = false
 			net_waiting.emit([])
 		if sim.tick_count % HASH_INTERVAL == 0:
-			Net.send_hash(sim.tick_count, NetProtocol.state_hash(sim))
+			endpoint.send_hash(sim.tick_count, NetProtocol.state_hash(sim))
 	elif lockstep.stalled_frames % 30 == 29 and not sim.finished:
 		_waiting = true
 		net_waiting.emit(lockstep.missing_slots())
@@ -206,9 +212,9 @@ func _report_bot_learning() -> void:
 func _exit_tree() -> void:
 	for s in sources:
 		s.dispose()
-	if lockstep:
-		if Net.inputs_received.is_connected(lockstep.receive):
-			Net.inputs_received.disconnect(lockstep.receive)
-		for pair in [[Net.peer_dropped, _on_net_peer_dropped], [Net.desync_detected, _on_net_desync], [Net.host_lost, _on_net_host_lost]]:
-			if pair[0].is_connected(pair[1]):
-				pair[0].disconnect(pair[1])
+	if lockstep and is_instance_valid(endpoint):
+		var pairs := [[endpoint.inputs_received, lockstep.receive], [endpoint.peer_dropped, _on_net_peer_dropped],
+				[endpoint.desync_detected, _on_net_desync], [endpoint.host_lost, _on_net_host_lost]]
+		for pair in pairs:
+			if (pair[0] as Signal).is_connected(pair[1]):
+				(pair[0] as Signal).disconnect(pair[1])

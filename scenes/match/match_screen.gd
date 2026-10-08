@@ -343,7 +343,7 @@ func _on_net_return_to_lobby() -> void:
 
 func _restart() -> void:
 	if _online:
-		if Net.is_host:
+		if Net.is_leader():
 			Net.host_back_to_lobby()
 			Router.goto(&"online_lobby")
 		return
@@ -369,7 +369,7 @@ func _on_match_ended(ranking: Array) -> void:
 	await get_tree().create_timer(1.2).timeout
 	results_panel.show_results(sim, setup, ranking, board_view)
 	if _online:
-		results_panel.set_rematch_text(tr("ONLINE_BACK_TO_ROOM") if Net.is_host else "", Net.is_host)
+		results_panel.set_rematch_text(tr("ONLINE_BACK_TO_ROOM") if Net.is_leader() else "", Net.is_leader())
 
 
 func _exit_tree() -> void:
