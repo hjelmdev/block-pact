@@ -23,9 +23,10 @@ Keyboard / Joypad / Touch / Bot / (Network) → InputSource.gather(tick) → int
 | `ai/` | `BotBrain` (bedömning), `BotInputSource`, `BotProfile`, `BotTrainer` (GA), `BotLearning` (online-ES) | `core`, `input` |
 | `presentation/` | `BoardView` med lager, HUD, effekter, ljudmappning och touch | Lyssnar bara på signaler |
 | `scenes/` | Boot, menyer, match (`MatchController` och `match_screen`) | Allt ovan |
-| `services/` | Autoloads: `GameSettings`, `Platform`, `ControlSchemes`, `Assets`, `AudioManager`, `Auth`, `Progress`, `Router` | |
-| `net/` | `NetworkSession`, ett abstrakt gränssnitt för online som ännu inte är implementerat | |
-| `data/` | Spellägen, klossar, specialblock och achievements (`.tres`) | |
+| `services/` | Autoloads: `GameSettings`, `Platform`, `ControlSchemes`, `Assets`, `AudioManager`, `Auth`, `Progress`, `Router`, `Net` | |
+| `net/` | Online: `RealtimeClient`, `RoomHost` (host-logik för ett rum), `NetLockstep`, `NetProtocol`, `ChatFilter` | `core`, `scenes/match` |
+| `server/` | Dedikerad headless-server som kör många `RoomHost` (se `docs/SERVER.md`) | `net` |
+| `data/` | Spellägen, klossar, specialblock, powerups, bot-personligheter, achievements (`.tres`) och chattens ordlista | |
 | `skins/`, `audio/`, `ui/`, `config/` | Utbytbara assets och konfiguration | |
 
 ## Viktiga principer
@@ -41,7 +42,7 @@ Keyboard / Joypad / Touch / Bot / (Network) → InputSource.gather(tick) → int
 | Fråga | Beslut | Var |
 |---|---|---|
 | Kolliderar aktiva klossar? | Nej som standard (val i lobbyn). Låser en kloss där en annan fallande kloss är, lyfts den fallande klossen upp | `GameModeConfig.active_piece_collision`, `MatchSetup.rule_overrides` |
-| Game over | Alla förlorar, högst poäng vinner (lag- och co-op-ranking per läge) | `WinCondition` |
+| Game over | Alla förlorar, högst poäng vinner (lag- och co-op-ranking per läge). *Knockout*: 3 liv, dina block försvinner när du förlorar ett, sista kvar vinner | `WinCondition`, `KnockoutWinCondition` |
 | Spawn | Egen kolumn per spelare, utspridda över mittersta 60 % av brädet (`spawn_spread`) så att spelarna hamnar nära varandra. Om den är (nästan) begravd spawnar klossen på närmaste lediga plats, och det blir game over först när hela toppen är full | `MatchSimulation._find_spawn_x` |
 | Poäng | 100 × (1/3/5/8) per rensning, fördelat efter ägd andel. +50 per rad till den som slutför raden. Combo +50/steg. Allt × level | `ScoreRules` |
 | x5 | Modell A: multiplicerar ägarens andel av raden | `ScoreRules.special_mode` |
@@ -63,7 +64,13 @@ Keyboard / Joypad / Touch / Bot / (Network) → InputSource.gather(tick) → int
 - Allt går genom simuleringen och är deterministiskt, så det fungerar online. Presentationen lyssnar på `board_effect`, `powerup_changed` och `powerup_used`.
 - Lobbyvalen (krock, specialblock, powerups) är en gemensam komponent, `scenes/menus/match_options.gd`, som både den lokala lobbyn och online-lobbyn använder.
 
-## Online (peer-to-peer med host)
+## Läsbarhet, avatarer och touch
+
+- Namnetiketter ovanför fallande klossar (din egen = "DU"), spår vid hårt drop, landningsdamm och röd pulserande kant när stapeln närmar sig toppen (`BoardView`). Utrop staplas i stället för att överlappa.
+- Avatarer: genererade pixel-figurer i `ui/avatars/` (mappen anges i `GameAssets.avatar_dir`) som färgas i spelarens färg (`AvatarView`). Valet sparas lokalt och i `profiles.avatar`.
+- Touch: svepgester är standard (`presentation/touch/gesture_controls.gd`). Sidosvep köar exakta kolumnsteg i `TouchInputSource` som släpps i tangentbordets ARR-takt. Knappar finns kvar som inställning.
+
+## Online (peer-to-peer med host eller dedikerad server)
 
 ```
  Supabase Realtime (WebSocket)                 WebRTC (datakanaler, stjärna)
@@ -92,7 +99,7 @@ Test utan internet: `tests/mock_realtime_server.gd` är en lokal Realtime-ersät
 ## Kända begränsningar och nästa steg
 
 - Bottarna är bra i 1–2 spelare men har svårare att samarbeta på stora brädor (6–8 spelare), där rader med enstaka hål blir kvar. Spelplanens storlek och gravitation för många spelare behöver speltestas.
-- Powerups finns som utbyggnadspunkt (`MatchRule`) men inget innehåll ännu.
 - Inloggning från desktop/editor använder en lokal callback-server på port 43117.
 - Online: om hostens webbläsarflik ligger i bakgrunden pausar webbläsaren spelet och alla får vänta. Det finns ingen TURN-server ännu.
-- Highscores skickas från klienten och kan fuskas. Se kommentaren i SQL-migrationen om validering via replay.
+- Highscores skickas från klienten och kan fuskas. Nästa steg: låt den dedikerade servern spara poängen (den har hela input-loggen).
+- Svepkontrollerna är testade med simulerade touch-händelser, inte på riktiga telefoner än.
