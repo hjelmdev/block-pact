@@ -1,0 +1,12 @@
+# Words masked in chat (case-insensitive substring match). One per line.
+# Extend freely – no code changes needed.
+fuck
+shit
+cunt
+bitch
+whore
+fitta
+kuk
+hora
+jävla
+helvete

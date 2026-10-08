@@ -18,6 +18,7 @@ func _init() -> void:
 	_test_special_effects()
 	_test_powerups()
 	_test_knockout()
+	_test_chat_filter()
 	print("\n%d passed, %d failed" % [_passes, _failures])
 	quit(1 if _failures > 0 else 0)
 
@@ -423,3 +424,9 @@ func _test_knockout() -> void:
 		if s2.finished:
 			break
 	_check(s2.finished and s2.ranking.size() == 2, "knockout match ends by elimination")
+
+
+func _test_chat_filter() -> void:
+	_check(ChatFilter.clean("  hej   [b]du[/b]  ") == "hej (b)du(/b)", "chat: trims, collapses and defuses markup")
+	_check(ChatFilter.clean("Vilken JÄVLA lobby") == "Vilken ***** lobby", "chat: masks blocklisted words")
+	_check(ChatFilter.clean("x".repeat(500)).length() == ChatFilter.MAX_LENGTH, "chat: length cap")

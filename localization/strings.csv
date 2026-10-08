@@ -162,3 +162,17 @@ SETTINGS_TOUCH_SCHEME_GESTURES,Swipe (gestures),Svep (gester)
 SETTINGS_TOUCH_SCHEME_BUTTONS,On-screen buttons,Knappar på skärmen
 SETTINGS_SWIPE_SENS,Swipe distance per column,Svepavstånd per kolumn
 GESTURE_HINT,"Swipe ←→ move · Drag ↓ soft drop · Flick ↑ drop · Tap rotate · 2 fingers rotate back · Hold = hold piece","Svep ←→ flytta · Dra ↓ mjukt fall · Svep ↑ släpp · Tryck rotera · 2 fingrar rotera bakåt · Håll = spara kloss"
+CHAT_TITLE,Chat,Chatt
+CHAT_PLACEHOLDER,Say something…,Skriv något…
+CHAT_SEND,Send,Skicka
+CHAT_MUTE,Mute,Tysta
+CHAT_UNMUTE,Unmute,Avtysta
+CHAT_JOINED,%s joined,%s anslöt
+CHAT_LEFT,%s left,%s lämnade
+CHAT_SLOW_DOWN,Slow down a little – too many messages.,Ta det lugnt – för många meddelanden.
+EMOTE_GG,GG!,GG!
+EMOTE_NICE,Nice!,Snyggt!
+EMOTE_OOPS,Oops!,Oj!
+EMOTE_WOW,Wow!,Wow!
+EMOTE_HI,Hi!,Hej!
+EMOTE_GL,Good luck!,Lycka till!

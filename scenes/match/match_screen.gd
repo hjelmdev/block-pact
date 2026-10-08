@@ -30,6 +30,8 @@ var setup: MatchSetup
 var panels: Dictionary = {}  # player id -> PlayerPanel
 var _online := false
 var _notice: Label
+var _emote_button: Button
+var _emote_bar: PanelContainer
 
 
 func _ready() -> void:
@@ -66,6 +68,8 @@ func _ready() -> void:
 		controller.net_host_lost.connect(_on_host_lost)
 		controller.net_desync.connect(func(t): _show_notice(tr("ONLINE_DESYNC") % t, Color(1, 0.6, 0.4)))
 		Net.return_to_lobby.connect(_on_net_return_to_lobby)
+		Net.emote_received.connect(_on_emote)
+		_build_emotes()
 	controller.start_match(setup, net_delay)
 	AudioManager.play_music()
 
@@ -201,6 +205,77 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed(ControlSchemes.PAUSE_ACTION) and not get_tree().paused and results_panel.visible == false:
 		_pause()
 		get_viewport().set_input_as_handled()
+	elif _online and event is InputEventKey and event.pressed and not event.echo:
+		var k: int = (event as InputEventKey).physical_keycode
+		if k >= KEY_1 and k <= KEY_6:
+			Net.send_emote(Net.EMOTES[k - KEY_1])
+			get_viewport().set_input_as_handled()
+
+
+# --------------------------------------------------------------------------
+# Emotes (online only): quick reactions, shown above the sender's panel.
+
+func _build_emotes() -> void:
+	_emote_button = Button.new()
+	_emote_button.text = ":)"
+	_emote_button.focus_mode = Control.FOCUS_NONE
+	_emote_button.custom_minimum_size = Vector2(44, 36)
+	pause_button.get_parent().add_child(_emote_button)
+	pause_button.get_parent().move_child(_emote_button, pause_button.get_index())
+	_emote_bar = PanelContainer.new()
+	var flow := HFlowContainer.new()
+	flow.add_theme_constant_override(&"h_separation", 4)
+	flow.add_theme_constant_override(&"v_separation", 4)
+	for i in Net.EMOTES.size():
+		var id: String = Net.EMOTES[i]
+		var b := Button.new()
+		b.text = tr("EMOTE_" + id.to_upper())
+		b.tooltip_text = str(i + 1)
+		b.focus_mode = Control.FOCUS_NONE
+		b.custom_minimum_size = Vector2(0, 40)
+		b.pressed.connect(func():
+			Net.send_emote(id)
+			_emote_bar.hide())
+		flow.add_child(b)
+	_emote_bar.add_child(flow)
+	_emote_bar.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
+	_emote_bar.offset_left = -330
+	_emote_bar.offset_top = 48
+	_emote_bar.offset_right = -8
+	_emote_bar.hide()
+	add_child(_emote_bar)
+	_emote_button.pressed.connect(func(): _emote_bar.visible = not _emote_bar.visible)
+	gestures.exclude_rects.append(func(): return _emote_button.get_global_rect().grow(10))
+	gestures.exclude_rects.append(func(): return _emote_bar.get_global_rect().grow(6) if _emote_bar.visible else Rect2())
+
+
+func _on_emote(key: String, emote: String) -> void:
+	if setup == null:
+		return
+	for i in setup.slots.size():
+		var pid: int = setup.slots[i].peer_id
+		var slot_key := Net.my_key if pid == Net.my_peer_id else Net.key_for_peer(pid)
+		if slot_key != key or setup.slots[i].kind == PlayerSlot.Kind.BOT:
+			continue
+		var panel: PlayerPanel = panels.get(i)
+		if panel == null:
+			return
+		var l := Label.new()
+		l.text = tr("EMOTE_" + emote.to_upper())
+		l.add_theme_font_size_override(&"font_size", 20)
+		l.add_theme_color_override(&"font_color", board_view.player_color(i).lightened(0.4))
+		l.add_theme_color_override(&"font_outline_color", Color(0, 0, 0, 0.9))
+		l.add_theme_constant_override(&"outline_size", 6)
+		l.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		add_child(l)
+		l.reset_size()
+		var r := panel.get_global_rect()
+		l.global_position = Vector2(r.get_center().x - l.size.x * 0.5, r.end.y - l.size.y * 0.2)
+		var t := create_tween().set_parallel(true)
+		t.tween_property(l, "global_position:y", l.global_position.y - 30.0, 1.6)
+		t.tween_property(l, "modulate:a", 0.0, 0.5).set_delay(1.1)
+		t.chain().tween_callback(l.queue_free)
+		return
 
 
 func _notification(what: int) -> void:

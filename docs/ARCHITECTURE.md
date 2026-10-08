@@ -80,6 +80,7 @@ Keyboard / Joypad / Touch / Bot / (Network) → InputSource.gather(tick) → int
 - **`net/realtime_client.gd`**: en minimal Supabase Realtime-klient (Phoenix-protokoll 1.0.0) med Broadcast och Presence. Den kräver inga tabeller.
 - **`net/net_lockstep.gd`**: deterministisk lockstep. Lokala platser samplas `delay` ticks i förväg (3–12 ticks, baserat på ping), och simuleringen tar tick T först när alla platsers input för T finns. Bottar körs bara hos hosten och deras inputs skickas som en människas.
 - **Frånkoppling**: lämnar en klient tar hosten över platsen med tomma inputs från exakt den tick den senast reläade, så matchen fortsätter. Lämnar hosten avslutas matchen för alla.
+- **Chatt och emotes** går som Realtime Broadcast i rummets kanal (`chat`, `emote`), helt vid sidan av lockstep. Både avsändare och mottagare kör `ChatFilter` (längd, markup, ordlista i `data/chat_blocklist.txt`). Det finns en enkel hastighetsbegränsning, och man kan tysta spelare lokalt. Samma kanal fungerar oavsett om hosten är en spelare eller en server.
 - **Desync-skydd**: klienterna skickar en state-hash var 120:e tick och hosten jämför. Vid avvikelse visas en varning.
 - **WebRTC på desktop/editor** kräver GDExtensionen `addons/webrtc` (webrtc-native 1.1.0, Windows/Linux/macOS). Webbläsare har WebRTC inbyggt, så addonen exkluderas från webbexporten.
 - **NAT**: STUN (Google) används som standard. Spelare bakom strikta NAT:ar kan behöva en TURN-server, som läggs till i `BackendConfig.ice_servers`.

@@ -20,12 +20,20 @@ signal peer_dropped(peer_id: int)
 signal host_lost()
 signal return_to_lobby()
 signal desync_detected(tick: int)
+## Chat line added to [member chat_log] ({key, name, text, system}).
+signal chat_received(entry: Dictionary)
+## In-match quick emote from a player (realtime key + emote id).
+signal emote_received(key: String, emote: String)
 
 enum State { OFFLINE, BROWSING, HOSTING, JOINING, IN_ROOM, IN_MATCH }
 
 const JOIN_TIMEOUT := 12.0
 const PING_INTERVAL := 1.0
 const HUMAN := -1  # lobby slot kind marker for a human seat
+const EMOTES := ["gg", "nice", "oops", "wow", "hi", "gl"]
+const CHAT_LOG_SIZE := 60
+## Rate limit: at most this many chat lines per 10 seconds.
+const CHAT_BURST := 5
 
 var config: BackendConfig
 var rt: RealtimeClient
@@ -53,6 +61,12 @@ var _hello_sent := false
 var _join_timer := 0.0
 var _ping_timer := 0.0
 var _browse_wanted := false
+## Lobby chat history for the current room (survives lobby <-> match).
+var chat_log: Array = []
+## Realtime keys of muted players (chat + emotes hidden).
+var muted: Dictionary = {}
+var _chat_times: Array = []
+var _last_emote_ms := 0
 
 
 func _ready() -> void:
@@ -233,7 +247,56 @@ func join_room(code: String, player_name: String) -> void:
 	status.emit(tr("ONLINE_JOINING") % room_code, false)
 
 
+## Sends a chat line to everyone in the room. Returns false if it was
+## empty or rate-limited.
+func send_chat(text: String) -> bool:
+	text = ChatFilter.clean(text)
+	if text == "" or _room_topic == "":
+		return false
+	var now := Time.get_ticks_msec()
+	_chat_times = _chat_times.filter(func(t): return now - t < 10000)
+	if _chat_times.size() >= CHAT_BURST:
+		_add_chat({"key": "", "name": "", "text": tr("CHAT_SLOW_DOWN"), "system": true})
+		return false
+	_chat_times.append(now)
+	rt.broadcast(_room_topic, "chat", {"from": my_key, "name": my_name, "text": text})
+	_add_chat({"key": my_key, "name": my_name, "text": text, "system": false})
+	return true
+
+
+func send_emote(emote: String) -> void:
+	var now := Time.get_ticks_msec()
+	if _room_topic == "" or not EMOTES.has(emote) or now - _last_emote_ms < 1500:
+		return
+	_last_emote_ms = now
+	rt.broadcast(_room_topic, "emote", {"from": my_key, "emote": emote})
+	emote_received.emit(my_key, emote)
+
+
+func set_muted(key: String, on: bool) -> void:
+	if on:
+		muted[key] = true
+	else:
+		muted.erase(key)
+
+
+func key_for_peer(peer_id: int) -> String:
+	return str(peers.get(peer_id, {}).get("key", ""))
+
+
+func system_chat(text: String) -> void:
+	_add_chat({"key": "", "name": "", "text": text, "system": true})
+
+
+func _add_chat(entry: Dictionary) -> void:
+	chat_log.append(entry)
+	while chat_log.size() > CHAT_LOG_SIZE:
+		chat_log.pop_front()
+	chat_received.emit(entry)
+
+
 func leave_room() -> void:
+	chat_log.clear()
 	if _mp:
 		_mp.close()
 	_mp = null
@@ -380,6 +443,17 @@ func _on_broadcast(topic: String, event: String, p: Dictionary) -> void:
 	if topic != _room_topic:
 		return
 	match event:
+		"chat":
+			var key := str(p.get("from", ""))
+			if key != "" and key != my_key and not muted.has(key):
+				var text := ChatFilter.clean(str(p.get("text", "")))
+				if text != "":
+					_add_chat({"key": key, "name": str(p.get("name", "?")).left(16), "text": text, "system": false})
+		"emote":
+			var ekey := str(p.get("from", ""))
+			var emote := str(p.get("emote", ""))
+			if ekey != my_key and not muted.has(ekey) and EMOTES.has(emote):
+				emote_received.emit(ekey, emote)
 		"hello":
 			if is_host:
 				_host_on_hello(p)

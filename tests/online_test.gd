@@ -40,6 +40,10 @@ func _detach() -> void:
 
 
 func _run() -> void:
+	Net.chat_received.connect(func(e):
+		if not e.system:
+			print("[%s] CHAT %s: %s" % [role, e.name, e.text]))
+	Net.emote_received.connect(func(_k, em): print("[%s] EMOTE %s" % [role, em]))
 	var code_file := dir + "/room_code.txt"
 	if role == "host":
 		DirAccess.remove_absolute(code_file)
@@ -61,7 +65,9 @@ func _run() -> void:
 				get_tree().quit(1)
 				return
 		print("[host] peers ", Net.peers)
-		await _wait(1.0)
+		await _wait(1.5)
+		Net.send_chat("Welcome   [b]ClientByte[/b]!")
+		await _wait(0.5)
 		Net.host_start()
 	else:
 		var t := 0.0
@@ -77,7 +83,9 @@ func _run() -> void:
 		Net.join_room(code, "ClientByte")
 		Net.state_changed.connect(func(s):
 			if s == Net.State.IN_ROOM and Router.current != &"online_lobby" and Router.current != &"match":
-				Router.goto(&"online_lobby"))
+				Router.goto(&"online_lobby")
+				await _wait(0.5)
+				Net.send_chat("hej, vilken jävla bra lobby"))
 	# wait for the match scene
 	var waited := 0.0
 	while Router.current != &"match":
@@ -97,6 +105,9 @@ func _run() -> void:
 			b.bind(_sim, i)
 			ctrl.lockstep.sources[i] = b
 	print("[%s] match started, delay %d, slots %s" % [role, ctrl.net_delay, ctrl.setup.slots.map(func(s): return [s.display_name, s.kind])])
+	if role == "client":
+		await _wait(1.0)
+		Net.send_emote("gg")
 	var elapsed := 0.0
 	var last_logged := -1
 	while elapsed < seconds:
