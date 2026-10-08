@@ -27,6 +27,9 @@ docker run --rm --restart unless-stopped block-pact-server --name "Block Pact EU
 | `--idle-close` | 60 | Sekunder innan ett tomt rum stängs |
 | `--realtime-url` | – | Annan Realtime-server (lokala tester) |
 | `--no-stun` | – | Ingen STUN (lokala tester) |
+| `--verify-only` | – | Kontrollera bara highscores, inga rum |
+| `--once` | – | Med `--verify-only`: avsluta när inget är kvar att kontrollera |
+| `--supabase-url` | – | Annan Supabase-adress (lokala tester) |
 
 Servern läser Supabase-uppgifterna från `config/backend_config.tres` precis som spelet. Den behöver bara utgående anslutningar: WebSocket till Supabase Realtime och UDP för WebRTC. Inga portar behöver öppnas för spelarna. Kör den nära spelarna (t.ex. en billig VPS i Stockholm eller Frankfurt) för låg ping.
 
@@ -51,7 +54,19 @@ godot --headless --path . res://tests/online_test.tscn -- --role sclientB --dir 
 
 Båda klienterna hittar serverrummet i listan, den första blir ledare och startar, och klienterna skriver state-hashar som ska vara identiska.
 
+## Highscore-verifiering
+
+Servern kan också kontrollera highscores. Spelet laddar upp en replay av matchen, och servern spelar upp den headless och sparar bara poäng som den kan återskapa exakt (se *Verifierade highscores* i `docs/ARCHITECTURE.md`).
+
+Verifieringen slås på när miljövariabeln `BLOCK_PACT_SERVICE_KEY` innehåller Supabase-projektets **service_role**-nyckel (Supabase → Project Settings → API keys). Nyckeln ger full åtkomst till databasen, så den får aldrig hamna i spelet eller i git.
+
+- **Windows:** lägg nyckeln i `tools\service_key.local.txt` (git-ignorerad). `run_server.bat` läser den automatiskt.
+- **Docker:** `docker run -e BLOCK_PACT_SERVICE_KEY=... block-pact-server`
+- **Bara verifiering, inga rum:** `godot --headless --path . res://server/server_main.tscn -- --verify-only` (lägg till `--once` för att avsluta när kön är tom).
+- **Utan egen server:** lägg nyckeln som repository secret `BLOCK_PACT_SERVICE_KEY` på GitHub (Settings → Secrets and variables → Actions). Då kör workflowen *Verify highscores* var 15:e minut. GitHub kör schemalagda jobb lite när det passar, så det kan dröja upp till en halvtimme innan poängen syns.
+
+Utan någon verifierare skickas poängen fortfarande in, men de hamnar inte på topplistan förrän något kontrollerar dem.
+
 ## Nästa steg
 
-- **Highscore-validering:** servern har hela input-loggen (`MatchController.input_log`) och kan spara poängen till Supabase med en service-nyckel i stället för att klienterna gör det. Då går det inte att fuska.
 - **TURN:** spelare bakom strikta NAT:ar kan behöva en TURN-server i `BackendConfig.ice_servers`.

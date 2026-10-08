@@ -6,6 +6,10 @@ rem Point GODOT at the *console* Godot executable if it isn't on PATH, e.g.
 rem   set GODOT=C:\Godot\Godot_v4.7-stable_win64_console.exe
 if "%GODOT%"=="" set GODOT=Godot_v4.7-stable_win64_console.exe
 
+rem Highscore verification: put the Supabase service_role key in
+rem tools\service_key.local.txt (git-ignored, never share it).
+if exist "%~dp0service_key.local.txt" set /p BLOCK_PACT_SERVICE_KEY=<"%~dp0service_key.local.txt"
+
 set NAME=%~1
 if "%NAME%"=="" set NAME=%COMPUTERNAME%
 

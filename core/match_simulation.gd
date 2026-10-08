@@ -243,6 +243,13 @@ func powerups_enabled() -> bool:
 	return not _powerups.is_empty()
 
 
+## Leaderboard family: "party" (special blocks / powerups) or "classic".
+func ruleset() -> String:
+	if powerups_enabled() or config.special_preset == "all":
+		return "party"
+	return "classic"
+
+
 ## Gravity for one player, including Slow / Rush effects.
 func gravity_ticks_for(p: PlayerState) -> int:
 	var g := current_gravity_ticks()

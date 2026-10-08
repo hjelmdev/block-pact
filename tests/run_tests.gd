@@ -19,6 +19,7 @@ func _init() -> void:
 	_test_powerups()
 	_test_knockout()
 	_test_chat_filter()
+	_test_replay()
 	print("\n%d passed, %d failed" % [_passes, _failures])
 	quit(1 if _failures > 0 else 0)
 
@@ -430,3 +431,91 @@ func _test_chat_filter() -> void:
 	_check(ChatFilter.clean("  hej   [b]du[/b]  ") == "hej (b)du(/b)", "chat: trims, collapses and defuses markup")
 	_check(ChatFilter.clean("Vilken JÄVLA lobby") == "Vilken ***** lobby", "chat: masks blocklisted words")
 	_check(ChatFilter.clean("x".repeat(500)).length() == ChatFilter.MAX_LENGTH, "chat: length cap")
+
+
+## Replays survive a JSON round trip (as through the database) and
+## reproduce the exact score; tampering and odd setups are caught.
+func _test_replay() -> void:
+	var setup := _make_setup(2, 4711, "res://data/modes/shared_competition.tres")
+	for slot in setup.slots:
+		slot.kind = PlayerSlot.Kind.LOCAL_HUMAN
+	setup.rule_overrides = {"powerups_enabled": true, "special_preset": "all", "active_piece_collision": false}
+	var sim := MatchSimulation.new(setup)
+	sim.start()
+	# Real play (bots) for a while, then reckless hard drops so it ends.
+	var bots: Array[BotInputSource] = []
+	for i in 2:
+		var b := BotInputSource.new(BotProfile.load_profile(&"normal"))
+		b.bind(sim, i)
+		bots.append(b)
+	var log: Array[PackedInt32Array] = []
+	while not sim.finished and sim.tick_count < 40000:
+		var inputs := PackedInt32Array()
+		for i in 2:
+			var b := bots[i].gather(sim.tick_count)
+			if sim.tick_count > 4000 and sim.tick_count % (5 + i) == 0:
+				b = InputCommand.HARD_DROP | (InputCommand.USE_POWER if i == 0 else 0)
+			inputs.append(b)
+		log.append(inputs)
+		sim.step(inputs)
+	_check(sim.finished, "replay: source match finishes")
+	var replay := MatchReplay.from_log(setup, log)
+	var wire: Variant = JSON.parse_string(JSON.stringify(replay.to_dict()))
+	var parsed := MatchReplay.from_dict(wire)
+	_check(parsed.has("replay"), "replay: parses after JSON round trip (%s)" % parsed.get("error", "ok"))
+	if not parsed.has("replay"):
+		return
+	var runner := MatchReplay.Runner.new(parsed.replay)
+	while not runner.advance(500):
+		pass
+	_check(runner.consistent(), "replay: ends exactly where the match ended")
+	_check(runner.sim.players[0].score == sim.players[0].score and runner.sim.players[1].score == sim.players[1].score
+			and runner.sim.players[1].lines_finished == sim.players[1].lines_finished, "replay: identical scores")
+	print("    replay: %d ticks, %d bytes, scores %d / %d" % [replay.ticks, str(wire.inputs).length(), sim.players[0].score, sim.players[1].score])
+
+	# What the server does with an upload (minus HTTP).
+	var sub := {"id": 1, "mode_id": "shared", "ruleset": sim.ruleset(), "slot": 1,
+			"claimed_score": sim.players[1].score, "sim_version": MatchReplay.SIM_VERSION, "replay": wire}
+	sub.mode_id = String(setup.mode.mode_id)
+	var pre := ScoreVerifier.check_submission(sub)
+	_check(pre.has("replay"), "verifier: accepts a sane upload")
+	var vr := MatchReplay.Runner.new(pre.replay)
+	while not vr.advance(3000):
+		pass
+	var verdict := ScoreVerifier.judge(sub, vr)
+	_check(verdict.status == "verified" and verdict.score == sim.players[1].score, "verifier: verifies the real score")
+	var greedy := sub.duplicate(true)
+	greedy.claimed_score += 1000
+	_check(ScoreVerifier.judge(greedy, vr).status == "rejected", "verifier: rejects an inflated claim")
+	var botslot := sub.duplicate(true)
+	_check(ScoreVerifier.check_submission(botslot).has("replay"), "verifier: (human seat in this setup)")
+	botslot.replay.setup.slots[1].kind = PlayerSlot.Kind.BOT
+	_check(ScoreVerifier.check_submission(botslot).get("status", "") == "rejected", "verifier: rejects a bot's seat")
+	var wrongmode := sub.duplicate(true)
+	wrongmode.mode_id = "classic_solo"
+	_check(ScoreVerifier.check_submission(wrongmode).get("status", "") == "rejected", "verifier: rejects a mode mismatch")
+
+	# Tampering: change one late input -> no longer reproduces the claim.
+	var bad: Dictionary = wire.duplicate(true)
+	var bytes := Marshalls.base64_to_raw(bad.inputs).decompress(replay.ticks * 2, FileAccess.COMPRESSION_DEFLATE)
+	for k in range(bytes.size() / 2, bytes.size()):
+		bytes[k] = InputCommand.HARD_DROP if bytes[k] == 0 else 0
+	bad.inputs = Marshalls.raw_to_base64(bytes.compress(FileAccess.COMPRESSION_DEFLATE))
+	var r2 := MatchReplay.Runner.new(MatchReplay.from_dict(bad).replay)
+	while not r2.advance(5000):
+		pass
+	_check(not r2.consistent() or r2.sim.players[0].score != sim.players[0].score
+			or r2.sim.players[1].score != sim.players[1].score, "replay: tampered inputs are caught")
+
+	var evil: Dictionary = wire.duplicate(true)
+	evil.setup.rule_overrides = {"lines_per_level": 1}
+	_check(MatchReplay.from_dict(evil).has("error"), "replay: unknown rule override rejected")
+	evil = wire.duplicate(true)
+	evil.setup.mode_path = "res://config/backend_config.tres"
+	_check(MatchReplay.from_dict(evil).has("error"), "replay: mode outside data/modes rejected")
+	evil = wire.duplicate(true)
+	evil.v = MatchReplay.SIM_VERSION + 1
+	_check(MatchReplay.from_dict(evil).get("unsupported", false), "replay: other sim version flagged")
+	evil = wire.duplicate(true)
+	evil.ticks = replay.ticks + 1
+	_check(MatchReplay.from_dict(evil).has("error"), "replay: wrong length rejected")

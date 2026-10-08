@@ -66,6 +66,9 @@ static func load_active() -> BackendConfig:
 	var i := args.find("--realtime-url")
 	if i >= 0 and i + 1 < args.size():
 		cfg.realtime_url_override = args[i + 1]
+	i = args.find("--supabase-url")
+	if i >= 0 and i + 1 < args.size():
+		cfg.supabase_url = args[i + 1]
 	if args.has("--no-stun"):
 		cfg.ice_servers = []
 	# Web: ?realtime=ws://… (testing against a local Realtime server)

@@ -96,10 +96,25 @@ Keyboard / Joypad / Touch / Bot / (Network) → InputSource.gather(tick) → int
 
 Test utan internet: `tests/mock_realtime_server.gd` är en lokal Realtime-ersättare, och `tests/online_test.tscn` kör en host och en klient mot den. Båda spelar en match och skriver state-hashar som jämförs.
 
+## Verifierade highscores
+
+Klienten skickar aldrig in en poäng direkt. Den laddar upp en **replay** till tabellen `score_submissions`, och poängen hamnar på topplistan först när servern har kunnat återskapa den.
+
+1. `MatchController.make_replay()` packar ihop `MatchSetup` och varje ticks inputs (lokal input-logg eller `NetLockstep.input_log` online). Det blir en `MatchReplay` (`core/match_replay.gd`) med en byte per plats och tick, deflate-komprimerad och base64-kodad. En minut spel tar ungefär 1 kB.
+2. `Progress` laddar upp replayn med den poäng klienten fick och frågar sedan efter status några gånger, så att resultatskärmen kan visa "Nytt personbästa", "kunde inte återskapas" eller "kontrolleras senare".
+3. `ScoreVerifier` (`server/score_verifier.gd`) hämtar väntande inskick med `claim_score_submissions()`. Den validerar setupen (bara lägen i `data/modes/`, bara lobbyns regelval, ingen egen brädstorlek, inte en botplats, rätt simuleringsversion) och spelar upp matchen headless med samma `MatchSimulation`. Uppspelningen sprids över flera frames så att rummen på samma server inte hackar.
+4. Om matchen tar slut på exakt samma tick och platsen får exakt den poäng som skickades in, skriver `finish_score_submission()` poängen med **serverns** värden. Annars blir inskicket `rejected` (eller `unsupported` om spelversionen är äldre).
+
+I databasen kan bara service-rollen skriva i `scores`, och den nyckeln finns bara hos servern (`BLOCK_PACT_SERVICE_KEY`). Samma replay kan bara skickas in en gång per användare, och antalet inskick per timme är begränsat.
+
+Verifieraren körs i den dedikerade servern när nyckeln finns, eller fristående med `--verify-only --once`. GitHub-workflowen `verify-scores.yml` gör det var 15:e minut, så topplistan fungerar även utan en server som är igång. `MatchReplay.SIM_VERSION` följer `NetProtocol.VERSION`: när simuleringen ändras kan gamla replays inte längre återskapas, och de markeras som `unsupported`.
+
+Achievements låses fortfarande upp på klienten. De syns bara för spelaren själv, så där finns inget att vinna på att fuska.
+
 ## Kända begränsningar och nästa steg
 
 - Bottarna är bra i 1–2 spelare men har svårare att samarbeta på stora brädor (6–8 spelare), där rader med enstaka hål blir kvar. Spelplanens storlek och gravitation för många spelare behöver speltestas.
 - Inloggning från desktop/editor använder en lokal callback-server på port 43117.
 - Online: om hostens webbläsarflik ligger i bakgrunden pausar webbläsaren spelet och alla får vänta. Det finns ingen TURN-server ännu.
-- Highscores skickas från klienten och kan fuskas. Nästa steg: låt den dedikerade servern spara poängen (den har hela input-loggen).
+- Highscore-verifieringen stoppar påhittade poäng och manipulerade matcher, men inte en "perfekt" spelare som i själva verket är ett program som skapar giltiga inputs (TAS). Det skyddet kräver att matchen spelas på servern.
 - Svepkontrollerna är testade med simulerade touch-händelser, inte på riktiga telefoner än.

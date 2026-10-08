@@ -18,6 +18,12 @@ extends Node
 ##   --idle-close SEC     close empty rooms after this long (default 60)
 ##   --realtime-url URL   override the Realtime websocket (local tests)
 ##   --no-stun            no STUN servers (local tests)
+##   --verify-only        only check uploaded highscores, host no rooms
+##   --once               with --verify-only: exit when nothing is left to check
+##
+## Highscore verification runs whenever the environment variable
+## BLOCK_PACT_SERVICE_KEY holds the Supabase service-role key (see
+## server/score_verifier.gd). Without it the server only hosts rooms.
 
 const MAINTENANCE_INTERVAL := 1.0
 const RESULTS_SECONDS := 8.0
@@ -27,6 +33,9 @@ var server_name := "Server"
 var max_rooms := 20
 var min_open := 1
 var idle_close_ms := 60000
+var verify_only := false
+var verify_once := false
+var verifier: ScoreVerifier
 
 var config: BackendConfig
 var rt: RealtimeClient
@@ -51,8 +60,29 @@ func _ready() -> void:
 	rt.presence_changed.connect(_on_presence)
 	rt.channel_error.connect(func(t, m): _log("realtime error %s: %s" % [t, m]))
 	rt.disconnected.connect(_on_disconnected)
+	_start_verifier()
+	if verify_only:
+		if verifier == null:
+			get_tree().quit(1)
+		return
 	_log("starting '%s' (build %s), max %d rooms, %d kept open" % [server_name, NetProtocol.build_id(), max_rooms, min_open])
 	_connect()
+
+
+func _start_verifier() -> void:
+	var key := ScoreVerifier.service_key()
+	if key == "" or not config.is_configured():
+		_log("highscore verification off (set %s to the service-role key to enable)" % ScoreVerifier.KEY_ENV)
+		return
+	verifier = ScoreVerifier.new(config.base_url(), key)
+	verifier.name = "ScoreVerifier"
+	add_child(verifier)
+	if verify_once:
+		verifier.poll_seconds = 0.5
+		verifier.idle.connect(func():
+			_log("verifier: nothing left to check – exiting")
+			get_tree().quit(0))
+	_log("highscore verification on (sim version %d)" % MatchReplay.SIM_VERSION)
 
 
 func _parse_args() -> void:
@@ -68,6 +98,10 @@ func _parse_args() -> void:
 				min_open = maxi(0, int(v))
 			"--idle-close":
 				idle_close_ms = maxi(5, int(v)) * 1000
+			"--verify-only":
+				verify_only = true
+			"--once":
+				verify_once = true
 
 
 func _connect() -> void:
@@ -89,6 +123,8 @@ func _on_disconnected(reason: String) -> void:
 
 
 func _process(delta: float) -> void:
+	if verify_only:
+		return
 	if _reconnect_in > 0.0:
 		_reconnect_in -= delta
 		if _reconnect_in <= 0.0:

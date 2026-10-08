@@ -193,6 +193,15 @@ func _physics_process(delta: float) -> void:
 	sim.step(inputs)
 
 
+## Everything needed to reproduce this match (for score verification).
+## Null if inputs were not recorded.
+func make_replay() -> MatchReplay:
+	var log: Array[PackedInt32Array] = lockstep.input_log if net_mode and lockstep else input_log
+	if sim == null or log.size() != sim.tick_count:
+		return null
+	return MatchReplay.from_log(setup, log)
+
+
 func _on_match_finished(ranking: Array) -> void:
 	running = false
 	_report_bot_learning()

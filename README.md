@@ -102,6 +102,8 @@ Inget är uppsatt ännu. Spelet startar och fungerar som gäst. Gör så här n�
 
 Gäster kan spela allt och se topplistan, men highscore, achievements och nickname-profil sparas bara för inloggade. Topplistan delas upp per läge och regler: *Klassiskt* och *Party* (specialblock eller powerups påslagna).
 
+Highscores är **verifierade**: spelet laddar upp en replay av matchen, och servern spelar upp den och sparar bara poäng den kan återskapa. Något måste köra verifieringen: den dedikerade servern eller GitHub-workflowen *Verify highscores*. Båda behöver service-nyckeln, se `docs/SERVER.md`.
+
 ## Tester
 
 - Simulering, poäng, determinism och bottar:

@@ -71,8 +71,15 @@ func set_nickname(value: String) -> void:
 	profile_changed.emit()
 
 
+## How often / how long the results screen waits for the server's verdict.
+const VERIFY_POLL_SECONDS := 3.0
+const VERIFY_POLL_TRIES := 20
+
+
 ## Called by the results screen. Returns a short note for the player.
-func submit_match(sim: MatchSimulation, setup: MatchSetup, ranking: Array) -> String:
+## `replay` is the full match (setup + inputs); the score only reaches the
+## leaderboard once the server has replayed it and got the same result.
+func submit_match(sim: MatchSimulation, setup: MatchSetup, ranking: Array, replay: MatchReplay = null) -> String:
 	var human_index := -1
 	for i in setup.slots.size():
 		if setup.slots[i].kind == PlayerSlot.Kind.LOCAL_HUMAN:
@@ -85,17 +92,15 @@ func submit_match(sim: MatchSimulation, setup: MatchSetup, ranking: Array) -> St
 	var p := sim.get_player(human_index)
 	var stats := stats_for(sim, p, ranking)
 	_check_achievements(stats, setup.mode.mode_id)
-	if setup.mode.leaderboard_enabled:
-		_post_score(setup, sim, p)
+	if setup.mode.leaderboard_enabled and replay != null:
+		_submit_replay(setup, sim, p, replay)
 		return tr("RESULTS_SAVING")
 	return tr("RESULTS_SAVED")
 
 
 ## "classic" or "party" (special blocks / powerups) – separate leaderboards.
 static func ruleset_for(sim: MatchSimulation) -> String:
-	if sim.powerups_enabled() or sim.config.special_preset == "all":
-		return "party"
-	return "classic"
+	return sim.ruleset()
 
 
 func stats_for(sim: MatchSimulation, p: PlayerState, ranking: Array) -> Dictionary:
@@ -140,24 +145,43 @@ func fetch_personal_best(mode_id: StringName, ruleset: String) -> int:
 	return 0
 
 
-func _post_score(setup: MatchSetup, sim: MatchSimulation, p: PlayerState) -> void:
+func _submit_replay(setup: MatchSetup, sim: MatchSimulation, p: PlayerState, replay: MatchReplay) -> void:
 	var ruleset := ruleset_for(sim)
 	var previous_best := await fetch_personal_best(setup.mode.mode_id, ruleset)
-	var res: Dictionary = await Auth.rest("POST", "/rest/v1/scores", {
+	var res: Dictionary = await Auth.rest("POST", "/rest/v1/score_submissions", {
 		"mode_id": String(setup.mode.mode_id),
 		"ruleset": ruleset,
-		"score": p.score,
-		"lines": p.lines_finished,
-		"players": setup.slots.size(),
-		"duration_s": sim.tick_count / MatchSimulation.TICKS_PER_SECOND,
-		"seed": setup.seed,
-	})
-	if not res.ok:
+		"slot": p.id,
+		"claimed_score": p.score,
+		"sim_version": MatchReplay.SIM_VERSION,
+		"replay": replay.to_dict(),
+	}, true, PackedStringArray(["Prefer: return=representation"]))
+	if not res.ok or not res.data is Array or res.data.is_empty():
 		score_saved.emit(tr("RESULTS_SAVE_FAILED"))
-	elif p.score > previous_best:
-		score_saved.emit(tr("RESULTS_NEW_BEST") % p.score)
-	else:
-		score_saved.emit(tr("RESULTS_SAVED_BEST") % previous_best)
+		return
+	var id := int(res.data[0].get("id", 0))
+	score_saved.emit(tr("RESULTS_VERIFYING"))
+	for i in VERIFY_POLL_TRIES:
+		await get_tree().create_timer(VERIFY_POLL_SECONDS).timeout
+		var st: Dictionary = await Auth.rest("GET", "/rest/v1/score_submissions?select=status&id=eq.%d" % id, null)
+		var status := ""
+		if st.ok and st.data is Array and not st.data.is_empty():
+			status = str(st.data[0].get("status", ""))
+		match status:
+			"verified":
+				if p.score > previous_best:
+					score_saved.emit(tr("RESULTS_NEW_BEST") % p.score)
+				else:
+					score_saved.emit(tr("RESULTS_SAVED_BEST") % previous_best)
+				return
+			"rejected":
+				score_saved.emit(tr("RESULTS_REJECTED"))
+				return
+			"unsupported":
+				score_saved.emit(tr("RESULTS_OUTDATED"))
+				return
+	# No verifier answered in time – it will be handled later.
+	score_saved.emit(tr("RESULTS_VERIFY_LATER"))
 
 
 func _check_achievements(stats: Dictionary, mode_id: StringName) -> void:

@@ -7,3 +7,4 @@
 
 # Local secrets / machine-specific config
 config/backend_config.local.tres
+tools/service_key.local.txt

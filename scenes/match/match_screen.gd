@@ -367,7 +367,7 @@ func _quit() -> void:
 
 func _on_match_ended(ranking: Array) -> void:
 	await get_tree().create_timer(1.2).timeout
-	results_panel.show_results(sim, setup, ranking, board_view)
+	results_panel.show_results(sim, setup, ranking, board_view, controller.make_replay())
 	if _online:
 		results_panel.set_rematch_text(tr("ONLINE_BACK_TO_ROOM") if Net.is_leader() else "", Net.is_leader())
 

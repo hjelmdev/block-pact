@@ -29,7 +29,7 @@ func set_rematch_text(text: String, visible_button: bool) -> void:
 		_menu.grab_focus()
 
 
-func show_results(sim: MatchSimulation, setup: MatchSetup, ranking: Array, view: BoardView) -> void:
+func show_results(sim: MatchSimulation, setup: MatchSetup, ranking: Array, view: BoardView, replay: MatchReplay = null) -> void:
 	for c in _rows.get_children():
 		c.queue_free()
 	var coop := setup.mode.team_mode == GameModeConfig.TeamMode.COOP
@@ -75,7 +75,7 @@ func show_results(sim: MatchSimulation, setup: MatchSetup, ranking: Array, view:
 	# Saving progress (accounts only)
 	if not Progress.score_saved.is_connected(_on_score_saved):
 		Progress.score_saved.connect(_on_score_saved)
-	var result := Progress.submit_match(sim, setup, ranking)
+	var result := Progress.submit_match(sim, setup, ranking, replay)
 	_note.text = result
 	_note.visible = result != ""
 	show()

@@ -1,0 +1,65 @@
+# Checks uploaded highscores when no dedicated server is running.
+#
+# Runs the headless verifier (server/server_main.tscn --verify-only --once)
+# every 15 minutes: it replays every waiting submission and exits.
+# A running dedicated server with BLOCK_PACT_SERVICE_KEY does the same job
+# within seconds; then this workflow simply finds nothing to do.
+#
+# Enable once: Settings → Secrets and variables → Actions → New repository
+# secret "BLOCK_PACT_SERVICE_KEY" = the Supabase service_role key
+# (Supabase → Project Settings → API keys). Without it the job is skipped.
+name: Verify highscores
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: verify-scores
+  cancel-in-progress: false
+
+env:
+  GODOT_VERSION: "4.7"
+  GODOT_RELEASE: "stable"
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      BLOCK_PACT_SERVICE_KEY: ${{ secrets.BLOCK_PACT_SERVICE_KEY }}
+    steps:
+      - name: Skip without service key
+        if: env.BLOCK_PACT_SERVICE_KEY == ''
+        run: echo "BLOCK_PACT_SERVICE_KEY is not set – nothing to do."
+
+      - uses: actions/checkout@v4
+        if: env.BLOCK_PACT_SERVICE_KEY != ''
+
+      - name: Cache Godot
+        if: env.BLOCK_PACT_SERVICE_KEY != ''
+        id: cache-godot
+        uses: actions/cache@v4
+        with:
+          path: ~/godot
+          key: godot-${{ env.GODOT_VERSION }}-${{ env.GODOT_RELEASE }}-editor
+
+      - name: Download Godot
+        if: env.BLOCK_PACT_SERVICE_KEY != '' && steps.cache-godot.outputs.cache-hit != 'true'
+        run: |
+          V="${GODOT_VERSION}-${GODOT_RELEASE}"
+          mkdir -p ~/godot
+          curl -sSL -o godot.zip "https://github.com/godotengine/godot/releases/download/${V}/Godot_v${V}_linux.x86_64.zip"
+          unzip -q godot.zip -d ~/godot
+          mv ~/godot/Godot_v${V}_linux.x86_64 ~/godot/godot
+          rm godot.zip
+
+      - name: Verify waiting highscores
+        if: env.BLOCK_PACT_SERVICE_KEY != ''
+        run: |
+          ~/godot/godot --headless --path . --import || true
+          timeout 600 ~/godot/godot --headless --path . res://server/server_main.tscn -- --verify-only --once

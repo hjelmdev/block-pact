@@ -179,3 +179,7 @@ EMOTE_GL,Good luck!,Lycka till!
 ACCOUNT_AVATAR,Avatar,Avatar
 ONLINE_TAG_LEADER,Leader,Ledare
 ONLINE_SERVER_ROOM,Server,Server
+RESULTS_VERIFYING,Result sent – the server is checking it…,Resultatet skickat – servern kontrollerar det…
+RESULTS_REJECTED,The server could not reproduce this result – it was not saved.,Servern kunde inte återskapa resultatet – det sparades inte.
+RESULTS_OUTDATED,This game version is outdated – update to get on the leaderboard.,Den här spelversionen är för gammal – uppdatera för att komma med på topplistan.
+RESULTS_VERIFY_LATER,Result sent. It shows up on the leaderboard once the server has checked it.,Resultatet skickat. Det syns på topplistan när servern har kontrollerat det.

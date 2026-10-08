@@ -1,6 +1,8 @@
 # Block Pact dedicated server (headless Godot, many rooms per process).
 #   docker build -t block-pact-server .
-#   docker run --rm block-pact-server --name "Block Pact EU" --max-rooms 20 --min-open 2
+#   docker run --rm -e BLOCK_PACT_SERVICE_KEY=... block-pact-server --name "Block Pact EU" --max-rooms 20 --min-open 2
+# BLOCK_PACT_SERVICE_KEY (Supabase service_role key) turns on highscore
+# verification; leave it out to only host rooms.
 FROM ubuntu:24.04
 
 ARG GODOT_VERSION=4.7-stable
