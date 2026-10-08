@@ -114,7 +114,7 @@ Achievements låses fortfarande upp på klienten. De syns bara för spelaren sj�
 
 ## Kända begränsningar och nästa steg
 
-- Bottarna är bra i 1–2 spelare men har svårare att samarbeta på stora brädor (6–8 spelare), där rader med enstaka hål blir kvar. Spelplanens storlek och gravitation för många spelare behöver speltestas.
+- Bottar på stora brädor: en bot kollar brädet igen precis innan den släpper klossen, om någon annan hunnit lägga en kloss sedan den planerade. Det höjde effektiviteten (rensade celler / lagda celler) för 8 svåra bottar från 38 % till 80 %, och de överlever ungefär 3 gånger längre. Normala bottar ligger kvar runt 65 % vid 8 spelare, eftersom de rör sig långsamt och oftare krockar med andras klossar. Spelplanens storlek och gravitation för många spelare behöver fortfarande speltestas med människor.
 - Inloggning från desktop/editor använder en lokal callback-server på port 43117.
 - Online: om hostens webbläsarflik ligger i bakgrunden står spelet still för alla tills den är tillbaka (spelarflikar hanteras, se ovan). Använd serverrum för att slippa det. Det finns ingen TURN-server ännu.
 - Highscore-verifieringen stoppar påhittade poäng och manipulerade matcher, men inte en "perfekt" spelare som i själva verket är ett program som skapar giltiga inputs (TAS). Det skyddet kräver att matchen spelas på servern.

@@ -154,7 +154,16 @@ func _next_action(p: PlayerState) -> int:
 		_target = _choose(p)
 		if _target == null:
 			return InputCommand.SOFT_DROP
-	_last_action = _decide(a)
+	var action := _decide(a)
+	if action == InputCommand.HARD_DROP and _planned_version != sim.board_version:
+		# Someone locked a piece since we planned (often right into our gap
+		# on a crowded board): look again before committing.
+		_target = _choose(p)
+		if _target == null:
+			return InputCommand.SOFT_DROP
+		_target.use_hold = false
+		action = _decide(a)
+	_last_action = action
 	return _last_action
 
 
