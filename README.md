@@ -87,6 +87,10 @@ Varje bot har en **svårighetsgrad** (hur bra och snabbt den spelar) och en **pe
   samma kommando med `--role client`.
 - Spela mot dig själv: starta två fönster med `--realtime-url` som ovan, eller öppna spelet i två webbläsarflikar.
 
+### Dedikerad server
+
+`server/server_main.tscn` kör många rum i en headless Godot-process, och rummen syns i spelets rumslista. Se `docs/SERVER.md` för körning, Docker och flaggor.
+
 ## Konton (Supabase)
 
 Inget är uppsatt ännu. Spelet startar och fungerar som gäst. Gör så här när det är dags:

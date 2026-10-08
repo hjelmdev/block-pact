@@ -1,0 +1,6 @@
+.git
+.godot
+build
+android
+*.tar.gz
+tests/__pycache__

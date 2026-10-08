@@ -512,7 +512,19 @@ func _send(target: int, msg: Array) -> void:
 func _peer_open(pid: int) -> bool:
 	if _mp == null or not _mp.has_peer(pid):
 		return false
-	return _mp.get_peer(pid).get("connected", false)
+	return peer_channels_open(_mp.get_peer(pid))
+
+
+## True when the peer is connected and its data channels are still open
+## (sending on a closing channel logs engine errors).
+static func peer_channels_open(info: Dictionary) -> bool:
+	if not info.get("connected", false):
+		return false
+	for ch in info.get("channels", []):
+		if ch != null and (ch as WebRTCDataChannel).get_ready_state() != WebRTCDataChannel.STATE_OPEN:
+			return false
+	var conn: WebRTCPeerConnection = info.get("connection")
+	return conn == null or conn.get_connection_state() == WebRTCPeerConnection.STATE_CONNECTED
 
 
 func _lobby_updated(notify_list := true) -> void:

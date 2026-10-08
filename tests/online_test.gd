@@ -69,6 +69,41 @@ func _run() -> void:
 		Net.send_chat("Welcome   [b]ClientByte[/b]!")
 		await _wait(0.5)
 		Net.host_start()
+	elif role.begins_with("sclient"):
+		# Join a room on the dedicated server via the public room list.
+		Net.start_browsing()
+		var t := 0.0
+		while Net.rooms.filter(func(r): return r.get("server", false)).is_empty():
+			await _wait(0.25)
+			t += 0.25
+			if t > 20.0:
+				print("[%s] FAIL: no server room listed" % role)
+				get_tree().quit(1)
+				return
+		var room: Dictionary = Net.rooms.filter(func(r): return r.get("server", false))[0]
+		print("[%s] joining server room %s (%s)" % [role, room.code, room.get("host", "")])
+		Net.state_changed.connect(func(s):
+			if s == Net.State.IN_ROOM and Router.current != &"online_lobby" and Router.current != &"match":
+				Router.goto(&"online_lobby"))
+		Net.join_room(room.code, role.capitalize())
+		t = 0.0
+		while true:
+			var humans: Array = Net.lobby.get("slots", []).filter(func(s): return s.kind == Net.HUMAN)
+			var all_connected := humans.all(func(s): return Net.peers.get(s.peer_id, {}).get("connected", false))
+			if Net.state == Net.State.IN_ROOM and humans.size() >= 2 and all_connected:
+				break
+			await _wait(0.25)
+			t += 0.25
+			if t > 30.0:
+				print("[%s] FAIL: second player never arrived (lobby %s)" % [role, Net.lobby])
+				get_tree().quit(1)
+				return
+		print("[%s] in room, leader=%s" % [role, Net.is_leader()])
+		if Net.is_leader():
+			Net.host_add_bot("hard")
+			Net.host_set_options({"collision": false, "powerups": true, "specials": "all"})
+			await _wait(1.0)
+			Net.host_start()
 	else:
 		var t := 0.0
 		while not FileAccess.file_exists(code_file):

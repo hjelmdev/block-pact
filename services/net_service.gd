@@ -530,7 +530,7 @@ func _on_packet(_from: int, msg: Array) -> void:
 
 
 func _send(target: int, msg: Array) -> void:
-	if _mp == null or not _mp.has_peer(target) or not _mp.get_peer(target).get("connected", false):
+	if _mp == null or not _mp.has_peer(target) or not RoomHost.peer_channels_open(_mp.get_peer(target)):
 		return
 	_mp.transfer_mode = MultiplayerPeer.TRANSFER_MODE_RELIABLE
 	_mp.set_target_peer(target)

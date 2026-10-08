@@ -84,7 +84,8 @@ Keyboard / Joypad / Touch / Bot / (Network) → InputSource.gather(tick) → int
 - **Desync-skydd**: klienterna skickar en state-hash var 120:e tick och hosten jämför. Vid avvikelse visas en varning.
 - **WebRTC på desktop/editor** kräver GDExtensionen `addons/webrtc` (webrtc-native 1.1.0, Windows/Linux/macOS). Webbläsare har WebRTC inbyggt, så addonen exkluderas från webbexporten.
 - **NAT**: STUN (Google) används som standard. Spelare bakom strikta NAT:ar kan behöva en TURN-server, som läggs till i `BackendConfig.ice_servers`.
-- **Dedikerad server senare**: samma meddelanden (`NetProtocol`) kan implementeras av en headless Godot-server som tar host-rollen (peer 1). Då behövs ingen spelare som host, och servern kan validera highscores genom att spela upp input-loggen.
+- **`net/room_host.gd` (`RoomHost`)**: all host-logik för ett rum. `Net` använder en när spelaren är host, och den dedikerade servern kör många (se `docs/SERVER.md`). `MatchController` pratar med en *lockstep-endpoint*, antingen `Net` (spelare) eller en `RoomHost` (server).
+- **Rumsledare**: i serverrum styr den första spelaren läge, regler, bottar och start via `MSG_CMD`. I spelarrum är hosten alltid ledare.
 
 Test utan internet: `tests/mock_realtime_server.gd` är en lokal Realtime-ersättare, och `tests/online_test.tscn` kör en host och en klient mot den. Båda spelar en match och skriver state-hashar som jämförs.
 
