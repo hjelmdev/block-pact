@@ -32,6 +32,14 @@ Servern läser Supabase-uppgifterna från `config/backend_config.tres` precis so
 
 Hosting som fungerar: valfri Linux-VPS (Hetzner, DigitalOcean, Scaleway …), Fly.io eller Railway med Dockerfilen. En liten maskin (1–2 vCPU) räcker för många rum, eftersom varje rum bara kör en lätt simulering på 60 Hz.
 
+## Köra på din egen dator (Windows)
+
+Enklast: öppna projektet i Godot, öppna `server/server_main.tscn` och tryck **F6** (Run Current Scene). Servern startar med standardinställningar (namnet "Server", ett öppet rum).
+
+Eller dubbelklicka på `tools/run_server.bat` (servern får datorns namn). Om Godot inte hittas: sätt `GODOT` till sökvägen till `Godot_v4.7-stable_win64_console.exe`.
+
+Öppna sedan spelet (t.ex. webbversionen i mobilen) → *Online*. Serverns rum syns i listan. Datorn måste vara igång, men inga portar behöver öppnas i routern.
+
 ## Testa lokalt utan internet
 
 ```bash
